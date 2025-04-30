@@ -51,7 +51,7 @@ const MFAVerification: React.FC = () => {
       
       // MFA already verified, redirect to CAPTCHA
       console.log('MFA already verified, redirecting to CAPTCHA verification');
-      navigate('/captcha-verification', { replace: true });
+      navigate(`/captcha-verification/${auth.user.id}`, { replace: true });
       return;
     }
   
@@ -112,7 +112,7 @@ const MFAVerification: React.FC = () => {
         
         // Add a small delay to ensure state updates before navigation
         setTimeout(() => {
-          navigate('/captcha-verification', { replace: true });
+          navigate(`/captcha-verification/${auth.user.id}`, { replace: true });
         }, 300);
       } else {
         setError('Invalid verification code. Please try again.');

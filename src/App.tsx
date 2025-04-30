@@ -114,22 +114,28 @@ function App() {
                     <Route path="/" element={<Login />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<SignUp />} />
-                    <Route path="/mfa-verification" element={<MFAVerification />} />
-                    <Route path="/captcha-verification" element={<CaptchaVerificationPage />} />
-                    <Route path='/department-selection' element={<DepartmentSelection />} />
+                    <Route path="/mfa-verification/:userId" element={<MFAVerification />} />
+                    <Route path="/captcha-verification/:userId" element={<CaptchaVerificationPage />} />
+                    <Route path='/department-selection/:userId' element={<DepartmentSelection />} />
                     <Route path="/unauthorized" element={<Unauthorized />} />
                     <Route path="/contact-admin" element={<ContactAdmin />} />
                     
                     {/* Protected routes with Layout */}
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/:userId" element={<Dashboard />} />
                     <Route path="/dashboard/:userId/:departmentId" element={<Dashboard />} />
-                    <Route path="/department" element={<DepartmentSelection />} />
-                    <Route path="/files" element={<Files />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/activity" element={<Activity />} />
-                    <Route path="/users" element={<Users />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/settings" element={<Settings />} />
+                    {/* <Route path="/department" element={<DepartmentSelection />} /> */}
+                    <Route path="/files/:userId" element={<Files />} />
+                    <Route path="/files/:userId/:departmentId" element={<Files />} />
+                    <Route path="/analytics/:userId" element={<Analytics />} />
+                    <Route path="/analytics/:userId/:departmentId" element={<Analytics />} />
+                    <Route path="/activity/:userId" element={<Activity />} />
+                    <Route path="/activity/:userId/:departmentId" element={<Activity />} />
+                    <Route path="/users/:userId" element={<Users />} />
+                    <Route path="/users/:userId/:departmentId" element={<Users />} />
+                    <Route path="/profile/:userId" element={<Profile />} />
+                    <Route path="/profile/:userId/:departmentId" element={<Profile />} />
+                    <Route path="/settings/:userId" element={<Settings />} />
+                    <Route path="/settings/:userId/:departmentId" element={<Settings />} />
                     
                     <Route path="*" element={<NotFound />} />
                   </Routes>

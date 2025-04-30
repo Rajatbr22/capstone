@@ -127,7 +127,7 @@ const CaptchaVerificationPage: React.FC = () => {
       // Check if MFA is verified
       if (auth.user?.mfaEnabled && !auth.mfaVerified) {
         console.log('MFA not verified, redirecting to MFA verification');
-        navigate('/mfa-verification', { replace: true });
+        navigate(`/mfa-verification/${auth.user.id}`, { replace: true });
         return;
       }
   
@@ -148,7 +148,7 @@ const CaptchaVerificationPage: React.FC = () => {
               navigate(`/dashboard/${auth.user.id}/${auth.user.department_id}`, { replace: true });
             } else {
               console.log('User has no department ID, redirecting to department selection');
-              navigate('/department-selection', { replace: true });
+              navigate(`/department-selection/${auth.user.id}`, { replace: true });
             }
             return;
           }
@@ -195,7 +195,7 @@ const CaptchaVerificationPage: React.FC = () => {
     } else {
       // No department_id, redirect to department selection
       setTimeout(() => {
-        navigate('/department-selection', { replace: true });
+        navigate(`/department-selection/${auth.user.id}`, { replace: true });
       }, 1500);
     }
   };

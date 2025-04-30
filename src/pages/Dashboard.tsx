@@ -10,12 +10,14 @@ import { uploadFile, canUseSupabaseStorage } from '@/lib/file-upload';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/hooks/use-supabase';
 import { useFiles } from '@/contexts/FileContext';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const { getRecentActivities } = useActivity();
   const { auth } = useAuth();
   const { toast } = useToast();
   const { isLoading: isSupabaseLoading } = useSupabase();
+  const navigate = useNavigate()
   const { uploadFile: uploadFileToContext } = useFiles();
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -30,13 +32,18 @@ const Dashboard: React.FC = () => {
   // Get user-specific recent activities
   const recentActivities = getRecentActivities(3);
   
+  // useEffect(() => {
+  //   if(!auth.user.department_id || auth.user.department_id === null){
+  //     console.log("user don't have any department id redirecting to department selection page...");
+  //     navigate(`/department-selection/${auth.user.id}`)
+  //   }
+  // }, [])
+
   useEffect(() => {
     // Fetch user-specific data
     const fetchUserData = async () => {
       setIsLoadingStats(true);
       try {
-        // This would normally fetch real stats from Supabase for the specific user
-        // For now, we'll set some example values with a delay to simulate loading
         setTimeout(() => {
           setFileStats({
             totalFiles: auth.user?.id ? Math.floor(Math.random() * 10000) : 0,

@@ -42,15 +42,17 @@ const Login: React.FC = () => {
     if (auth.isAuthenticated) {
       console.log('Login: User already authenticated, MFA status =', auth.mfaVerified);
       
+
       if (auth.user?.mfaEnabled && !auth.mfaVerified) {
-        navigate('/mfa-verification', { replace: true });
-      } else if (!isCaptchaVerified()) {
-        navigate('/captcha-verification', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+        navigate(`/mfa-verification/${auth.user.id}`, { replace: true });
+      } 
+      // else if (!isCaptchaVerified()) {
+      //   navigate(`/captcha-verification/${userId}`, { replace: true });
+      // } else {
+      //   navigate('/dashboard', { replace: true });
+      // }
     }
-  }, [auth.isAuthenticated, auth.mfaVerified, auth.user?.mfaEnabled, navigate, auth, isCaptchaVerified]);
+  }, [auth.isAuthenticated, auth.mfaVerified, auth.user?.mfaEnabled, navigate, auth]);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,17 +69,13 @@ const Login: React.FC = () => {
         logActivity('login', 'system', 'low');
         console.log('Login successful, checking MFA status');
         
-        // Allow enough time for session to be updated before navigating
+
         setTimeout(() => {
-          // Check if authenticated before navigating
           if (auth.isAuthenticated) {
-            // Use replace to avoid back button issues
+
             if (auth.user?.mfaEnabled) {
-              console.log('Login: Redirecting to MFA verification');
-              navigate('/mfa-verification', { replace: true });
-            } else {
-              console.log('Login: Redirecting to CAPTCHA verification');
-              navigate('/captcha-verification', { replace: true });
+              console.log('Login: Redirecting to MFA verification', auth.user.id);
+              navigate(`/mfa-verification/${auth.user.id}`, { replace: true });
             }
           }
         }, 300);

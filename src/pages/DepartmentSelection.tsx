@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { Cpu, Megaphone, Handshake, Banknote, UserCog, Package, Paintbrush, Headphones, Settings, Scale, Crown, MoreHorizontal } from 'lucide-react';
+import fetchWithAuth from '@/lib/fetchInstance';
 
 
 interface Department {
@@ -126,7 +127,7 @@ const DepartmentSelection: React.FC = () => {
     navigate(`/dashboard/${departmentId}`, { replace: true });
   };
 
-  // const updateUserDepartment = async (departmentId) => {
+  // const updateUserDepartment = async (departmentId: string) => {
   //   try {
   //     const token = sessionStorage.getItem('token');
       
@@ -140,23 +141,22 @@ const DepartmentSelection: React.FC = () => {
   //       return;
   //     }
       
-  //     const response = await fetch(`${API_URL}/auth/update-profile`, {
+  //     const response = await fetchWithAuth(`/user/updateUserDepartment/${auth.user.id}`, {
   //       method: 'PUT',
   //       headers: {
   //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${token}`
   //       },
   //       body: JSON.stringify({
-  //         department_id: departmentId
+  //         departmentId: departmentId
   //       })
   //     });
       
-  //     const data = await response.json();
+  //     // const data = await response.json();
       
   //     if (!response.ok) {
   //       toast({
   //         title: "Update Failed",
-  //         description: data.message || "Failed to update department",
+  //         description: "Failed to update department",
   //         variant: "destructive",
   //       });
   //       return false;
@@ -178,6 +178,75 @@ const DepartmentSelection: React.FC = () => {
   //     return false;
   //   }
   // };
+
+  const updateUserDepartment = async (departmentId: string) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "No authentication token found. Please log in again.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return false;
+      }
+      
+      const response = await fetchWithAuth(`/user/updateUserDepartment/${auth.user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          departmentId: departmentId
+        })
+      });
+      
+      // Parse response data
+      const data = response;
+      
+      if (!response.ok) {
+        // Use error message from response if available
+        const errorMessage = data?.message || 'Failed to update department';
+        
+        toast({
+          title: "Update Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
+        return false;
+      }
+      
+      toast({
+        title: "Department Updated",
+        description: "Your department has been updated successfully",
+      });
+      
+      return true;
+    } catch (error) {
+      // More detailed error logging and handling
+      console.error('Error updating department:', error);
+      
+      // Provide more specific error messages based on error type
+      let errorMessage = "An unexpected error occurred";
+      
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (error instanceof SyntaxError) {
+        errorMessage = "Invalid response from server.";
+      }
+      
+      // toast({
+      //   title: "Update Failed",
+      //   description: errorMessage,
+      //   variant: "destructive",
+      // });
+      
+      return false;
+    }
+  };
 
   const departmentDetails = [
     { name: 'Engineering', icon: Cpu, description: 'Building and maintaining system architecture.' },

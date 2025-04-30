@@ -34,33 +34,33 @@ const TopBar: React.FC = () => {
   const navItems = [
     {
       name: 'Dashboard',
-      path: '/dashboard',
+      path: (auth.user.role === 'admin' ? `/dashboard/${auth.user.id}` : `/dashboard/${auth.user.id}/${auth.user.department_id}`),
       requiredRole: 'guest' as const,
     },
     {
       name: 'Files',
-      path: '/files',
+      path: (auth.user.role === 'admin' ? `/files/${auth.user.id}` : `/files/${auth.user.id}/${auth.user.department_id}`),
       requiredRole: 'guest' as const,
     },
     {
       name: 'Activity',
-      path: '/activity',
-      requiredRole: 'user' as const,
+      path: (auth.user.role === 'admin' ? `/activity/${auth.user.id}` : `/activity/${auth.user.id}/${auth.user.department_id}`),
+      requiredRole: 'employee' as const,
     },
     {
       name: 'Analytics',
-      path: '/analytics',
-      requiredRole: 'manager' as const,
+      path: (auth.user.role === 'admin' ? `/analytics/${auth.user.id}` : `/analytics/${auth.user.id}/${auth.user.department_id}`),
+      requiredRole: 'department_manager' as const,
     },
     {
       name: 'Users',
-      path: '/users',
+      path: (auth.user.role === 'admin' ? `/users/${auth.user.id}` : `/users/${auth.user.id}/${auth.user.department_id}`),
       requiredRole: 'admin' as const,
     },
     {
       name: 'Settings',
-      path: '/settings',
-      requiredRole: 'user' as const,
+      path: (auth.user.role === 'admin' ? `/settings/${auth.user.id}` : `/settings/${auth.user.id}/${auth.user.department_id}`),
+      requiredRole: 'employee' as const,
     },
   ];
   
@@ -190,10 +190,10 @@ const TopBar: React.FC = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
                 <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
-                  {auth.user?.username.charAt(0).toUpperCase()}
+                  {auth.user?.email.charAt(0).toUpperCase()}
                 </div>
                 <span className="font-medium hidden md:inline-block">
-                  {auth.user?.username}
+                  {auth.user?.email.split("@")[0]}
                 </span>
               </Button>
             </DropdownMenuTrigger>

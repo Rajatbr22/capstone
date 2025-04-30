@@ -7,6 +7,7 @@ import { RefreshCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useActivity } from '@/contexts/ActivityContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CaptchaVerificationProps {
     onVerify: () => Promise<void> | void;
@@ -173,7 +174,7 @@ const CaptchaVerification: React.FC<CaptchaVerificationProps> = ({
     onVerify, 
     onFailure,
     maxAttempts = 5,
-    dashboardPath = '/department-selection'
+    dashboardPath = `/department-selection`
 }) => {
     const [captchaValue, setCaptchaValue] = useState('');
     const [captchaError, setCaptchaError] = useState(false);
@@ -183,6 +184,7 @@ const CaptchaVerification: React.FC<CaptchaVerificationProps> = ({
     const { toast } = useToast();
     const { logActivity } = useActivity();
     const navigate = useNavigate();
+    const { auth } = useAuth()
     
     // Use a ref to track initialization status
     const isInitialized = useRef(false);
@@ -205,7 +207,7 @@ const CaptchaVerification: React.FC<CaptchaVerificationProps> = ({
                         setIsVerified(true);
                         // If already verified, navigate to dashboard
                         setTimeout(() => {
-                            navigate(dashboardPath);
+                            navigate(`${dashboardPath}/${auth.user.id}`);
                         }, 500);
                         return true;
                     }

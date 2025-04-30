@@ -15,46 +15,48 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { setExpiryBasedOnRole } from '@/lib/expiryTime';
 
 const Sidebar: React.FC = () => {
   const { auth, logout, checkAccess } = useAuth();
-  
+  const expiryTime = setExpiryBasedOnRole(auth.user.role)
+
   const navItems = [
     {
       name: 'Dashboard',
-      path: '/dashboard',
+      path: (auth.user.role === 'admin' ? `/dashboard/${auth.user.id}` : `/dashboard/${auth.user.id}/${auth.user.department_id}`),
       icon: <Home className="w-5 h-5" />,
       requiredRole: 'guest' as const,
     },
     {
       name: 'Files',
-      path: '/files',
+      path: (auth.user.role === 'admin' ? `/files/${auth.user.id}` : `/files/${auth.user.id}/${auth.user.department_id}`),
       icon: <FileText className="w-5 h-5" />,
       requiredRole: 'guest' as const,
     },
     {
       name: 'Activity',
-      path: '/activity',
+      path: (auth.user.role === 'admin' ? `/activity/${auth.user.id}` : `/activity/${auth.user.id}/${auth.user.department_id}`),
       icon: <Activity className="w-5 h-5" />,
-      requiredRole: 'user' as const,
+      requiredRole: 'employee' as const,
     },
     {
       name: 'Analytics',
-      path: '/analytics',
+      path: (auth.user.role === 'admin' ? `/analytics/${auth.user.id}` : `/analytics/${auth.user.id}/${auth.user.department_id}`),
       icon: <BarChart className="w-5 h-5" />,
-      requiredRole: 'manager' as const,
+      requiredRole: 'department_manager' as const,
     },
     {
       name: 'Users',
-      path: '/users',
+      path: (auth.user.role === 'admin' ? `/users/${auth.user.id}` : `/users/${auth.user.id}/${auth.user.department_id}`),
       icon: <User className="w-5 h-5" />,
       requiredRole: 'admin' as const,
     },
     {
       name: 'Settings',
-      path: '/settings',
+      path: (auth.user.role === 'admin' ? `/settings/${auth.user.id}` : `/settings/${auth.user.id}/${auth.user.department_id}`),
       icon: <Settings className="w-5 h-5" />,
-      requiredRole: 'user' as const,
+      requiredRole: 'employee' as const,
     },
   ];
   
@@ -74,12 +76,15 @@ const Sidebar: React.FC = () => {
         <div className="p-4 border-b border-sidebar-border">
           <NavLink to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
-              {auth.user.username.charAt(0).toUpperCase()}
+              {auth.user.email.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div className="font-medium text-sidebar-foreground">{auth.user.username}</div>
-              <div className="text-xs text-sidebar-foreground/70">{auth.user.role}</div>
-              <div className="text-xs text-sidebar-foreground/70">{auth.user.department_id}</div>
+              <div className="font-medium text-sidebar-foreground">{auth.user.email}</div>
+              <div className="text-xs text-sidebar-foreground/70 flex items-center justify-between mt-2">
+                <span>role: {auth.user.role}</span>
+                <span className='font-semibold text-black bg-gradient-to-r from-green-300 to-blue-300 hover:from-pink-500 hover:to-yellow-500 hover:text-white p-1 rounded'>{auth.user.departmentName}</span>
+              </div>
+              {/* <div className="text-xs text-sidebar-foreground/70">{(auth.user.role === 'admin' ? '' : auth.user.department_id)}</div> */}
             </div>
           </NavLink>
         </div>
@@ -136,8 +141,8 @@ const Sidebar: React.FC = () => {
       <div className="p-4 mt-auto text-xs text-sidebar-foreground/70 border-t border-sidebar-border">
         <div className="flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
-          <span>Session expires in: {auth.sessionExpiry && 
-            Math.max(0, Math.round((auth.sessionExpiry.getTime() - Date.now()) / 60000))} minutes
+          <span>
+            Session expires in: {Math.max(0, Math.floor((new Date(auth.sessionExpiry).getTime() - Date.now()) / 60000))} minutes
           </span>
         </div>
       </div>

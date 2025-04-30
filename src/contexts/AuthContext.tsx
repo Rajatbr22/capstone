@@ -3,7 +3,7 @@ import { AuthState, User, Role } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { produce } from 'immer';
+import { setExpiryBasedOnRole } from '@/lib/expiryTime'
 
 // API configuration
 const API_URL = import.meta.env.VITE_API_URL;
@@ -113,12 +113,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               isAuthenticated: true,
               user: {
                 id: data.user.id,
-                username: data.user.username,
+                username: data.user.email.split("@")[0],
                 email: data.user.email,
                 role: data.user.role,
                 mfaEnabled: data.user.mfaEnabled || true,
                 riskScore: 0.1,
                 department_id: data.user.departmentId,
+                departmentName: data.user.departmentName,
                 failed_login_attempts: 0,
                 account_locked: false,
               },
@@ -133,10 +134,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return updatedAuth;
           });
           if (data.user.mfaEnabled && !auth.mfaVerified) {
-            navigate('/mfa-verification');
+            navigate(`/mfa-verification/${auth.user.id}`);
           }
         } else {
-          logout();
+          setTimeout(() => {
+            toast({
+              title: "Logged Out",
+              description: "You have been logged out successfully",
+              duration: 1000,
+            });
+            logout();
+          }, 1000);
         }
       } catch (err) {
         console.error('Error validating session:', err);
@@ -174,51 +182,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [auth]);
 
-  // Helper function to set up user session
-  // const setupUserSession = (userData: any) => {
-  //   const user: User = {
-  //     id: userData.id,
-  //     username: userData.username,
-  //     email: userData.email,
-  //     role: userData.role,
-  //     mfaEnabled: userData.mfaEnabled || true,
-  //     riskScore: 0.1,
-  //     department_id: userData.departmentId,
-  //     failed_login_attempts: 0,
-  //     account_locked: false,
-  //   };
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN') {
+          handleAuthStateChange();
+        } else if (event === 'SIGNED_OUT') {
+          setupUserSession(null)
+        }
+      }
+    );
     
-  //   // Set session expiry
-  //   const expiryTime = new Date();
-  //   expiryTime.setMinutes(expiryTime.getMinutes() + 30);
+    handleAuthStateChange();
     
-  //   setAuth({
-  //     isAuthenticated: true,
-  //     user,
-  //     mfaVerified: !user.mfaEnabled,
-  //     sessionExpiry: expiryTime,
-  //   });
-  // };
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Update the setupUserSession function to preserve MFA status
 const setupUserSession = (userData: any) => {
   setAuth(prevAuth => {
     const user: User = {
       id: userData.id,
-      username: userData.username,
+      username: userData.email.split("@")[0],
       email: userData.email,
       role: userData.role,
       mfaEnabled: userData.mfaEnabled || true,
       riskScore: 0.1,
       department_id: userData.departmentId, 
+      departmentName: userData.departmentName,
       failed_login_attempts: 0,
       account_locked: false,
     };
     
     // Set session expiry
-    const expiryTime = new Date();
-    expiryTime.setMinutes(expiryTime.getMinutes() + 30);
-    
+    const expiryTime = setExpiryBasedOnRole(userData.role)
     // Preserve MFA status when possible
     const mfaVerified = prevAuth.mfaVerified || !user.mfaEnabled;
     
@@ -238,7 +237,7 @@ const setupUserSession = (userData: any) => {
 
   const refreshSession = async () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('authToken');
       if (!token) {
         console.log('No auth token, cannot refresh session');
         return;
@@ -254,8 +253,7 @@ const setupUserSession = (userData: any) => {
         }
         
         // Reset session expiry
-        const expiryTime = new Date();
-        expiryTime.setMinutes(expiryTime.getMinutes() + 30);
+        const expiryTime = setExpiryBasedOnRole(data.user.role)
         
         setAuth(prev => ({
           ...prev,
@@ -292,7 +290,7 @@ const setupUserSession = (userData: any) => {
       });
       
       const data = await response.json();
-      console.log('userData: ', data);
+      // console.log('userData: ', data);
       
       if (!response.ok) {
         toast({
@@ -345,7 +343,7 @@ const setupUserSession = (userData: any) => {
       // Check if MFA is enabled
       if (data.mfaEnabled) {
         await sendMfaCode(data.email);
-        navigate('/mfa-verification');
+        navigate(`/mfa-verification/${auth.user.id}`);
       }
       return true;
       
@@ -365,6 +363,7 @@ const setupUserSession = (userData: any) => {
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
       localStorage.clear()
+      sessionStorage.clear()
   
       // Check if Supabase is configured
       if (!isSupabaseConfigured()) {
@@ -411,6 +410,101 @@ const setupUserSession = (userData: any) => {
     }
   };
 
+  const handleAuthStateChange = async () => {
+    try {
+      // Get the current session
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error checking auth state:', error.message);
+        return;
+      }
+      
+
+      if (session) {
+        const { data: userData } = await supabase.auth.getUser();
+        
+        if (!userData || !userData.user) {
+          console.error('No user data available');
+          return;
+        }
+        
+        const userEmail = userData.user.email;
+        const userName = userData.user.user_metadata?.full_name || userData.user.user_metadata?.name || userEmail.split('@')[0];
+                      
+        if (!userEmail) {
+          console.error('Email not found in Google account');
+          return;
+        }
+        
+        // Send data to your backend
+        const response = await fetch(`${API_URL}/auth/google`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ 
+            email: userEmail,
+            username: userName
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          toast({
+            title: "Login Failed",
+            description: data.message || "Invalid credentials",
+            variant: "destructive",
+          });
+          throw new Error(data.message || 'Failed to login');
+        }
+  
+        // Ensure data contains necessary fields before proceeding
+        if (!data || !data.user || !data.user._id) {
+          toast({
+            title: "Login Issue",
+            description: "Authentication successful but user data not received properly",
+            variant: "destructive",
+          });
+          console.error('Received incomplete user data: ', data);
+          return false;
+        }
+  
+        // Log user data for debugging
+        console.log('Received user data: ', data.user);
+        
+        if (data.token) {
+          sessionStorage.setItem('token', data.token)
+          console.log('Saved authToken:', data.token);
+        
+        } else {
+          console.error('Token not found in response');
+        }
+  
+        setupUserSession(data.user);
+        
+        toast({
+          title: "Login Successful",
+          description: "You have been logged in successfully!",
+        });
+        
+        // Check if MFA is enabled
+        if (data.mfaEnabled) {
+          await sendMfaCode(data.email);
+          navigate(`/mfa-verification/${auth.user.id}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error in auth state handler:', error);
+      toast({
+        title: "Authentication Error",
+        description: "An error occurred during authentication",
+        variant: "destructive",
+      });
+    }
+  };
+
   const signUp = async (username: string, email: string, password: string): Promise<boolean> => {
     // Basic validation
     if (!username || !email || !password) {
@@ -450,14 +544,14 @@ const setupUserSession = (userData: any) => {
         // If backend auto-logs in user
         if (data.accessToken) {
           console.log(data.accessToken)
-          localStorage.setItem('token', data.accessToken);
+          sessionStorage.setItem('token', data.accessToken);
           setupUserSession(data.user);
           
           // If MFA is required
           if (data.user.mfaEnabled) {
             console.log(data.user.mfaEnabled)
             await sendMfaCode(email);
-            navigate('/mfa-verification');
+            navigate(`/mfa-verification${auth.user.id}`);
           }
         } else {
           navigate('/login');
@@ -683,10 +777,10 @@ const setupUserSession = (userData: any) => {
   const logout = async () => {
     try {
       // Notify backend about logout
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('token');
       if (token) {
         try {
-          await fetch(`${API_URL}/auth/logout`, {
+          await fetch(`${API_URL}/auth/signout`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -699,21 +793,25 @@ const setupUserSession = (userData: any) => {
       }
       
       // Clear all localStorage items
+      sessionStorage.clear()
       localStorage.clear();
       
       // Reset local auth state
       setAuth(initialAuthState);
       
-      toast({
-        title: "Logged Out",
-        description: "You have been logged out successfully",
-      });
-
-      navigate('/login');
+      setTimeout(() => {
+        toast({
+          title: "Logged Out",
+          description: "You have been logged out successfully",
+          duration: 1000,
+        });
+        navigate('/login')
+      }, 1000);
     } catch (error) {
       console.error('Error during logout:', error);
       
       // Even if there's an error with backend, reset the local state
+      sessionStorage.clear()
       localStorage.clear();
       setAuth(initialAuthState);
       

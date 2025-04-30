@@ -8,6 +8,7 @@ export interface User {
   lastLogin?: Date;
   riskScore?: number;
   department_id: string;
+  departmentName: string;
   failed_login_attempts: number;
   account_locked: boolean;
   lockout_until: Date;

@@ -58,7 +58,7 @@ const Index = () => {
               console.log('Index: After session refresh, needsMfa =', needsMfa);
               
               if (needsMfa) {
-                navigate('/mfa-verification', { replace: true });
+                navigate(`/mfa-verification/${auth.user.id}`, { replace: true });
               } else {
                 // If MFA is verified, update the status in auth context
                 if (mfaVerifiedInStorage) {
@@ -120,7 +120,7 @@ const Index = () => {
         
         if (needsMfa) {
           console.log('Index: Redirecting to MFA verification');
-          navigate('/mfa-verification', { replace: true });
+          navigate(`/mfa-verification/${auth.user.id}`, { replace: true });
         } else {
           console.log('Index: Redirecting to dashboard');
           navigate('/dashboard', { replace: true });

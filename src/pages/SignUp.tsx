@@ -368,11 +368,11 @@ const SignUp: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       if (auth.user?.mfaEnabled && !auth.mfaVerified) {
-        navigate('/mfa-verification');
+        navigate(`/mfa-verification/${auth.user.id}`);
       } else if (!auth.mfaVerified) {
-        navigate('/mfa-verification');
+        navigate(`/mfa-verification/${auth.user.id}`);
       } else if (!localStorage.getItem('captchaVerified')) {
-        navigate('/captcha-verification');
+        navigate(`/captcha-verification/${auth.user.id}`);
       } else {
         navigate('/dashboard');
       }
@@ -395,9 +395,9 @@ const SignUp: React.FC = () => {
         
         if (auth.isAuthenticated) {
           if (auth.user?.mfaEnabled) {
-            navigate('/mfa-verification');
+            navigate(`/mfa-verification/${auth.user.id}`);
           } else {
-            navigate('/captcha-verification');
+            navigate(`/captcha-verification/${auth.user.id}`);
           }
         }
       }
