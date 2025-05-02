@@ -44,7 +44,7 @@ const Sidebar: React.FC = () => {
       name: 'Analytics',
       path: (auth.user.role === 'admin' ? `/analytics/${auth.user.id}` : `/analytics/${auth.user.id}/${auth.user.department_id}`),
       icon: <BarChart className="w-5 h-5" />,
-      requiredRole: 'department_manager' as const,
+      requiredRole: 'department_head' as const,
     },
     {
       name: 'Users',
@@ -74,7 +74,7 @@ const Sidebar: React.FC = () => {
       
       {auth.user && (
         <div className="p-4 border-b border-sidebar-border">
-          <NavLink to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <NavLink to={auth.user.role === 'admin' ? `/profile/${auth.user.id}` : `/profile/${auth.user.id}/${auth.user.department_id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold">
               {auth.user.email.charAt(0).toUpperCase()}
             </div>
@@ -113,7 +113,7 @@ const Sidebar: React.FC = () => {
           
           <li>
             <NavLink
-              to="/profile"
+              to={auth.user.role === 'admin' ? `/profile/${auth.user.id}` : `/profile/${auth.user.id}/${auth.user.department_id}`}
               className={({ isActive }) => cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
                 isActive 
@@ -142,7 +142,7 @@ const Sidebar: React.FC = () => {
         <div className="flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
           <span>
-            Session expires in: {Math.max(0, Math.floor((new Date(auth.sessionExpiry).getTime() - Date.now()) / 60000))} minutes
+            Session expires in: <span className='animate-pulse'>{Math.max(0, Math.floor((new Date(auth.sessionExpiry).getTime() - Date.now()) / 60000))}{" "}minutes</span> 
           </span>
         </div>
       </div>

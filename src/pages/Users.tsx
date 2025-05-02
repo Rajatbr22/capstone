@@ -1,470 +1,11 @@
-// import React, { useState, useEffect, useCallback } from 'react';
-// import {
-//   Card,
-//   CardHeader,
-//   CardTitle,
-//   CardDescription,
-//   CardContent,
-// } from "@/components/ui/card"
-// import { Input } from "@/components/ui/input"
-// import { Label } from "@/components/ui/label"
-// import {
-//   Table,
-//   TableBody,
-//   TableCaption,
-//   TableCell,
-//   TableFooter,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table"
-// import { User, Role } from '@/types';
-// import { useAuth } from '@/contexts/AuthContext';
-// import { Button } from '@/components/ui/button';
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu"
-// import { MoreVertical, Edit, Trash, User as UserIcon, CheckCircle, Ban, Copy, Mail, Lock, ShieldAlert, AlertTriangle } from 'lucide-react';
-// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-// import { Badge } from '@/components/ui/badge';
-// import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-// import { toast } from '@/hooks/use-toast';
-// import { useSupabase } from '@/hooks/use-supabase';
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select"
-// import {
-//   Form,
-//   FormControl,
-//   FormField,
-//   FormItem,
-//   FormMessage,
-// } from "@/components/ui/form"
-// import { z } from "zod"
-// import { zodResolver } from "@hookform/resolvers/zod"
-// import { useForm } from "react-hook-form"
-// import { cn } from '@/lib/utils';
-
-// const userSchema = z.object({
-//   username: z.string().min(2, {
-//     message: "Username must be at least 2 characters.",
-//   }),
-//   email: z.string().email({
-//     message: "Invalid email address.",
-//   }),
-//   role: z.enum(['admin', 'manager', 'user', 'guest']),
-//   riskScore: z.number().min(0).max(100).optional(),
-//   mfaEnabled: z.boolean().optional(),
-// })
-
-// const Users: React.FC = () => {
-//   const [users, setUsers] = useState<User[]>([]);
-//   const [searchQuery, setSearchQuery] = useState('');
-//   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-//   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-//   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-//   const { auth, checkAccess } = useAuth();
-//   const { supabase, getUserProfile } = useSupabase();
-//   const [isLoading, setIsLoading] = useState(false);
-  
-//   const fetchUsers = useCallback(async () => {
-//     setIsLoading(true);
-//     try {
-//       const { data, error } = await supabase
-//         .from('profiles')
-//         .select('*');
-      
-//       if (error) {
-//         console.error('Error fetching users:', error);
-//         toast({
-//           title: "Error",
-//           description: "Failed to fetch users",
-//           variant: "destructive",
-//         });
-//         return;
-//       }
-      
-//       const formattedUsers = await Promise.all(data.map(async (user: any) => {
-//         return {
-//           id: user.id,
-//           username: user.username,
-//           email: user.email,
-//           role: user.role as Role,
-//           mfaEnabled: user.mfa_enabled,
-//           lastLogin: user.last_login ? new Date(user.last_login) : undefined,
-//           riskScore: user.risk_score
-//         };
-//       }));
-      
-//       setUsers(formattedUsers);
-//     } catch (error) {
-//       console.error('Error fetching users:', error);
-//       toast({
-//         title: "Error",
-//         description: "An unexpected error occurred",
-//         variant: "destructive",
-//       });
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   }, [supabase]);
-  
-//   useEffect(() => {
-//     fetchUsers();
-//   }, [fetchUsers]);
-  
-//   const filteredUsers = users.filter(user =>
-//     user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//     user.email.toLowerCase().includes(searchQuery.toLowerCase())
-//   );
-  
-//   const handleEditClick = (user: User) => {
-//     setSelectedUser(user);
-//     setIsEditDialogOpen(true);
-//   };
-  
-//   const handleDeleteClick = (user: User) => {
-//     setSelectedUser(user);
-//     setIsDeleteDialogOpen(true);
-//   };
-  
-//   const handleCopyClick = (text: string) => {
-//     navigator.clipboard.writeText(text);
-//     toast({
-//       title: "Copied to clipboard",
-//       description: text,
-//     });
-//   };
-  
-//   const handleUpdateUser = async (values: z.infer<typeof userSchema>) => {
-//     if (!selectedUser) return;
-    
-//     setIsLoading(true);
-//     try {
-//       const { error } = await supabase
-//         .from('profiles')
-//         .update({
-//           username: values.username,
-//           email: values.email,
-//           role: values.role,
-//           risk_score: values.riskScore,
-//           mfa_enabled: values.mfaEnabled
-//         })
-//         .eq('id', selectedUser.id);
-        
-//       if (error) {
-//         console.error('Error updating user:', error);
-//         toast({
-//           title: "Error",
-//           description: "Failed to update user",
-//           variant: "destructive",
-//         });
-//         return;
-//       }
-      
-//       toast({
-//         title: "User updated",
-//         description: `${values.username} has been updated successfully`,
-//       });
-      
-//       setIsEditDialogOpen(false);
-//       fetchUsers();
-//     } catch (error) {
-//       console.error('Error updating user:', error);
-//       toast({
-//         title: "Error",
-//         description: "An unexpected error occurred",
-//       });
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-  
-//   const handleDeleteUser = async () => {
-//     if (!selectedUser) return;
-    
-//     setIsLoading(true);
-//     try {
-//       const { error } = await supabase
-//         .from('profiles')
-//         .delete()
-//         .eq('id', selectedUser.id);
-        
-//       if (error) {
-//         console.error('Error deleting user:', error);
-//         toast({
-//           title: "Error",
-//           description: "Failed to delete user",
-//           variant: "destructive",
-//         });
-//         return;
-//       }
-      
-//       toast({
-//         title: "User deleted",
-//         description: `${selectedUser.username} has been deleted successfully`,
-//       });
-      
-//       setIsDeleteDialogOpen(false);
-//       fetchUsers();
-//     } catch (error) {
-//       console.error('Error deleting user:', error);
-//       toast({
-//         title: "Error",
-//         description: "An unexpected error occurred",
-//       });
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-  
-//   const form = useForm<z.infer<typeof userSchema>>({
-//     resolver: zodResolver(userSchema),
-//     defaultValues: {
-//       username: selectedUser?.username || "",
-//       email: selectedUser?.email || "",
-//       role: selectedUser?.role || "user",
-//       riskScore: selectedUser?.riskScore || 0,
-//       mfaEnabled: selectedUser?.mfaEnabled || false,
-//     },
-//     mode: "onChange",
-//     values: {
-//       username: selectedUser?.username || "",
-//       email: selectedUser?.email || "",
-//       role: selectedUser?.role || "user",
-//       riskScore: selectedUser?.riskScore || 0,
-//       mfaEnabled: selectedUser?.mfaEnabled || false,
-//     }
-//   })
-  
-//   useEffect(() => {
-//     form.reset({
-//       username: selectedUser?.username || "",
-//       email: selectedUser?.email || "",
-//       role: selectedUser?.role || "user",
-//       riskScore: selectedUser?.riskScore || 0,
-//       mfaEnabled: selectedUser?.mfaEnabled || false,
-//     });
-//   }, [selectedUser]);
-  
-//   const hasAccessToView = (role: Role) => role !== "user" && role !== "guest";
-  
-//   return (
-//     <div>
-//       <div className="flex items-center justify-between space-y-2 md:space-y-0">
-//         <div>
-//           <h1 className="text-2xl font-semibold">Users</h1>
-//           <p className="text-muted-foreground">
-//             Manage users and their roles.
-//           </p>
-//         </div>
-//         <Input
-//           placeholder="Search users..."
-//           value={searchQuery}
-//           onChange={(e) => setSearchQuery(e.target.value)}
-//         />
-//       </div>
-      
-//       <Card className="mt-4">
-//         <CardHeader>
-//           <CardTitle>User List</CardTitle>
-//           <CardDescription>
-//             View and manage users in the system.
-//           </CardDescription>
-//         </CardHeader>
-//         <CardContent>
-//           <Table>
-//             <TableCaption>A list of users in your account.</TableCaption>
-//             <TableHeader>
-//               <TableRow>
-//                 <TableHead className="w-[50px]">Avatar</TableHead>
-//                 <TableHead>Username</TableHead>
-//                 <TableHead>Email</TableHead>
-//                 <TableHead>Role</TableHead>
-//                 <TableHead>Status</TableHead>
-//                 <TableHead className="text-right">Actions</TableHead>
-//               </TableRow>
-//             </TableHeader>
-//             <TableBody>
-//               {filteredUsers.map((user) => (
-//                 <TableRow key={user.id}>
-//                   <TableCell>
-//                     <Avatar>
-//                       <AvatarImage src={`https://avatar.vercel.sh/${user.username}.png`} />
-//                       <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
-//                     </Avatar>
-//                   </TableCell>
-//                   <TableCell>{user.username}</TableCell>
-//                   <TableCell>
-//                     {user.email}
-//                     <Button variant="ghost" size="icon" className="ml-2" onClick={() => handleCopyClick(user.email)}>
-//                       <Copy className="w-4 h-4" />
-//                     </Button>
-//                   </TableCell>
-//                   <TableCell>
-//                     <Badge variant="secondary">{user.role}</Badge>
-//                   </TableCell>
-//                   <TableCell>
-//                     {user.mfaEnabled ? (
-//                       <div className="flex items-center">
-//                         <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-//                         <span>MFA Enabled</span>
-//                       </div>
-//                     ) : (
-//                       <div className="flex items-center">
-//                         <AlertTriangle className="w-4 h-4 text-yellow-500 mr-1" />
-//                         <span>MFA Disabled</span>
-//                       </div>
-//                     )}
-//                   </TableCell>
-//                   <TableCell className="text-right">
-//                     <DropdownMenu>
-//                       <DropdownMenuTrigger asChild>
-//                         <Button variant="ghost" className="h-8 w-8 p-0">
-//                           <span className="sr-only">Open menu</span>
-//                           <MoreVertical className="h-4 w-4" />
-//                         </Button>
-//                       </DropdownMenuTrigger>
-//                       <DropdownMenuContent align="end">
-//                         <DropdownMenuItem onClick={() => handleEditClick(user)}>
-//                           <Edit className="w-4 h-4 mr-2" />
-//                           <span>Edit</span>
-//                         </DropdownMenuItem>
-//                         <DropdownMenuItem onClick={() => handleDeleteClick(user)}>
-//                           <Trash className="w-4 h-4 mr-2" />
-//                           <span>Delete</span>
-//                         </DropdownMenuItem>
-//                       </DropdownMenuContent>
-//                     </DropdownMenu>
-//                   </TableCell>
-//                 </TableRow>
-//               ))}
-//             </TableBody>
-//           </Table>
-//         </CardContent>
-//       </Card>
-      
-//       {/* Edit User Dialog */}
-//       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-//         <DialogContent className="sm:max-w-[425px]">
-//           <DialogHeader>
-//             <DialogTitle>Edit User</DialogTitle>
-//             <DialogDescription>
-//               Make changes to the user's profile here. Click save when you're done.
-//             </DialogDescription>
-//           </DialogHeader>
-//           <Form {...form}>
-//             <form onSubmit={form.handleSubmit(handleUpdateUser)} className="space-y-4">
-//               <div className="space-y-2">
-//                 <FormItem>
-//                   <Label htmlFor="username">Username</Label>
-//                   <FormControl>
-//                     <Input id="username" placeholder="Username" {...form.register("username")} />
-//                   </FormControl>
-//                   <FormMessage />
-//                 </FormItem>
-//               </div>
-//               <div className="space-y-2">
-//                 <FormItem>
-//                   <Label htmlFor="email">Email</Label>
-//                   <FormControl>
-//                     <Input id="email" placeholder="Email" {...form.register("email")} />
-//                   </FormControl>
-//                   <FormMessage />
-//                 </FormItem>
-//               </div>
-//               <div className="space-y-2">
-//                 <FormItem>
-//                   <Label htmlFor="role">Role</Label>
-//                   <Select onValueChange={value => form.setValue("role", value as Role)} defaultValue={selectedUser?.role}>
-//                     <FormControl>
-//                       <SelectTrigger>
-//                         <SelectValue placeholder="Select a role" />
-//                       </SelectTrigger>
-//                     </FormControl>
-//                     <SelectContent>
-//                       <SelectItem value="admin">Admin</SelectItem>
-//                       <SelectItem value="manager">Manager</SelectItem>
-//                       <SelectItem value="user">User</SelectItem>
-//                       {checkAccess('admin') && (
-//                         <SelectItem value="guest">Guest</SelectItem>
-//                       )}
-//                     </SelectContent>
-//                   </Select>
-//                   <FormMessage />
-//                 </FormItem>
-//               </div>
-//               <div className="space-y-2">
-//                 <FormItem>
-//                   <div className="flex items-center justify-between">
-//                     <Label htmlFor="mfaEnabled">MFA Enabled</Label>
-//                     <FormControl>
-//                       <input
-//                         type="checkbox"
-//                         id="mfaEnabled"
-//                         className="h-4 w-4 border border-input bg-background focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
-//                         {...form.register("mfaEnabled")}
-//                       />
-//                     </FormControl>
-//                   </div>
-//                   <FormMessage />
-//                 </FormItem>
-//               </div>
-//               <DialogFooter>
-//                 <Button type="submit">Save changes</Button>
-//               </DialogFooter>
-//             </form>
-//           </Form>
-//         </DialogContent>
-//       </Dialog>
-      
-//       {/* Delete User Dialog */}
-//       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-//         <DialogContent className="sm:max-w-[425px]">
-//           <DialogHeader>
-//             <DialogTitle>Delete User</DialogTitle>
-//             <DialogDescription>
-//               Are you sure you want to delete this user? This action cannot be undone.
-//             </DialogDescription>
-//           </DialogHeader>
-//           <div className="py-4">
-//             <p>
-//               Deleting user <span className="font-medium">{selectedUser?.username}</span> will remove all their data from the system.
-//             </p>
-//           </div>
-//           <DialogFooter>
-//             <Button type="button" variant="secondary" onClick={() => setIsDeleteDialogOpen(false)}>
-//               Cancel
-//             </Button>
-//             <Button type="button" variant="destructive" onClick={handleDeleteUser}>
-//               Delete
-//             </Button>
-//           </DialogFooter>
-//         </DialogContent>
-//       </Dialog>
-//     </div>
-//   );
-// };
-
-// export default Users;
-
-
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, Shield, Filter, Search, Plus, MoreHorizontal, AlertTriangle, CheckCircle, History } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -484,65 +25,172 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockUsers } from '@/lib/mock-data';
 import { toast } from '@/hooks/use-toast';
 import { User as UserType } from '@/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useNavigate } from 'react-router-dom';
+import fetchWithAuth from '@/lib/fetchInstance';
+import { useAuth } from '@/contexts/AuthContext';
 
-const Users: React.FC = () => {
-  const [users, setUsers] = useState<UserType[]>(mockUsers);
+const Users = () => {
+  const [users, setUsers] = useState([]);
+  const { auth } = useAuth();
   const [filterRole, setFilterRole] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [newUser, setNewUser] = useState({
     username: '',
     email: '',
-    role: 'user' as UserType['role'],
+    role: 'guest',
     mfaEnabled: true,
   });
-  
+
+  useEffect(() => {
+    fetchUsers();
+  }, [auth.user?.role]);
+
   // Filter users based on search and role filter
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesRole = 
       filterRole === 'all' || 
       user.role === filterRole;
-    
+
     return matchesSearch && matchesRole;
   });
-  
-  const handleAddUser = () => {
-    const newUserObj: UserType = {
-      id: `user-${Date.now()}`,
-      username: newUser.username,
-      email: newUser.email,
-      role: newUser.role,
-      lastLogin: new Date(),
-      mfaEnabled: newUser.mfaEnabled,
-      riskScore: 0.1,
-    };
-    
-    setUsers(prev => [...prev, newUserObj]);
-    setShowAddUserDialog(false);
-    
-    // Reset form
-    setNewUser({
-      username: '',
-      email: '',
-      role: 'user',
-      mfaEnabled: true,
-    });
-    
-    toast({
-      title: "User Added",
-      description: `${newUser.username} has been added as a ${newUser.role}`,
-    });
+
+  const fetchUsers = async() => {
+    try {
+      setLoading(true);
+      const token = sessionStorage.getItem('token');
+
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "No authentication token found. Please log in again.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/user/getUsers/${auth.user.id}/${auth.user.role}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+      });
+
+      if (!response.ok) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch users. Please try again later.",
+          variant: "destructive",
+        });
+      }
+
+      const data = await response.json();
+      // console.log('data', data)
+      // setUsers(data.users)
+      if (data) {
+        // console.log(data.users)
+        setUsers(data.users);
+      } 
+      else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load users.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  const getRiskBadge = (riskScore: number) => {
+
+  const handleAddUser = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "No authentication token found. Please log in again.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+      
+      const response = await fetchWithAuth('/user/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          username: newUser.username,
+          email: newUser.email,
+          role: newUser.role,
+          mfaEnabled: newUser.mfaEnabled,
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add user');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh user list after adding new user
+        fetchUsers();
+        
+        setShowAddUserDialog(false);
+        
+        // Reset form
+        setNewUser({
+          username: '',
+          email: '',
+          role: 'guest',
+          mfaEnabled: true,
+        });
+        
+        toast({
+          title: "User Added",
+          description: `${newUser.username} has been added as a ${newUser.role}`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to add user",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add user. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getRiskBadge = (riskScore) => {
     if (riskScore > 0.7) {
       return <Badge variant="destructive">High</Badge>;
     } else if (riskScore > 0.4) {
@@ -551,47 +199,157 @@ const Users: React.FC = () => {
       return <Badge variant="secondary">Low</Badge>;
     }
   };
-  
-  const handleResetMFA = (userId: string) => {
-    toast({
-      title: "MFA Reset",
-      description: "User will need to reconfigure MFA on next login",
-    });
+
+  const handleResetMFA = async (userId) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      
+      const response = await fetchWithAuth(`/user/resetMFA/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to reset MFA');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "MFA Reset",
+          description: "User will need to reconfigure MFA on next login",
+        });
+        
+        // Refresh user list to reflect changes
+        fetchUsers();
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to reset MFA",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error resetting MFA:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reset MFA. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
-  
-  const handleUserRoleChange = (userId: string, newRole: UserType['role']) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === userId 
-          ? { ...user, role: newRole }
-          : user
-      )
-    );
-    
-    toast({
-      title: "Role Updated",
-      description: `User role has been updated to ${newRole}`,
-    });
+
+  const handleUserRoleChange = async (userId, newRole) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      
+      const response = await fetchWithAuth(`/user/updateRole/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ role: newRole })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update user role');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update the local state to reflect the role change
+        setUsers(prev =>
+          prev.map(user =>
+            user.id === userId
+              ? { ...user, role: newRole }
+              : user
+          )
+        );
+        
+        toast({
+          title: "Role Updated",
+          description: `User role has been updated to ${newRole}`,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to update user role",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update user role. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
-  
-  const disableUser = (userId: string) => {
-    toast({
-      title: "User Disabled",
-      description: "User account has been temporarily disabled",
-    });
+
+  const disableUser = async (userId) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      
+      const response = await fetchWithAuth(`/user/disable/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to disable user');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "User Disabled",
+          description: "User account has been temporarily disabled",
+        });
+        
+        // Refresh user list to reflect changes
+        fetchUsers();
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to disable user",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error disabling user:", error);
+      toast({
+        title: "Error",
+        description: "Failed to disable user. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
-  
+
+  const getInitials = (username) => {
+    if (!username) return '';
+    return username.substring(0, 2).toUpperCase();
+  };
+
   return (
     <Layout requireAuth={true} requiredRole="admin">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage users and security roles
-            </p>
+            <p className="text-muted-foreground mt-1">Manage users and security roles</p>
           </div>
-          
+
           <Button 
             onClick={() => setShowAddUserDialog(true)}
             className="flex items-center gap-2"
@@ -622,8 +380,8 @@ const Users: React.FC = () => {
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="department_head">Department Head</SelectItem>
+              <SelectItem value="employee">Employee</SelectItem>
               <SelectItem value="guest">Guest</SelectItem>
             </SelectContent>
           </Select>
@@ -638,129 +396,142 @@ const Users: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <div className="grid grid-cols-6 border-b px-4 py-3 font-medium">
-                <div className="col-span-2">User</div>
-                <div className="hidden sm:block">Role</div>
-                <div className="hidden md:block">Last Login</div>
-                <div className="hidden lg:block">Risk Score</div>
-                <div className="text-right">Actions</div>
+            {loading ? (
+              <div className="py-8 text-center">
+                <div className="w-10 h-10 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-muted-foreground">Loading users...</p>
               </div>
-              
-              <div className="divide-y">
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
-                    <div key={user.id} className="grid grid-cols-6 px-4 py-3 items-center">
-                      <div className="col-span-2 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                          {user.username.charAt(0).toUpperCase()}
+            ) : (
+              <div className="rounded-md border">
+                <div className="grid grid-cols-7 items-center border-b px-4 py-3 font-medium">
+                  <div className="col-span-2">User</div>
+                  <div className="hidden sm:block">Role</div>
+                  <div className="hidden sm:block">Department</div>
+                  <div className="hidden md:block">Last Login</div>
+                  <div className="hidden lg:block">Risk Score</div>
+                  <div className="text-right">Actions</div>
+                </div>
+                
+                <div className="divide-y">
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((user) => (
+                      <div key={user._id} className="grid grid-cols-7 px-4 py-3 items-center">
+                        <div className="col-span-2 flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                            {getInitials(user.username)}
+                          </div>
+                          <div>
+                            <div className="font-medium">{user.username}</div>
+                            <div className="text-xs text-muted-foreground">{user.email}</div>
+                          </div>
                         </div>
+
+                        
+                        <div className="hidden sm:block">
+                          <Badge variant={
+                            user.role === 'admin' ? 'destructive' :
+                            user.role === 'department_head' ? 'default' :
+                            user.role === 'employee' ? 'secondary' :
+                            'outline'
+                          }>
+                            {user.role}
+                          </Badge>
+                        </div>
+
                         <div>
-                          <div className="font-medium">{user.username}</div>
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                          {user.departmentName}
+                        </div>
+                        
+                        <div className="hidden md:block text-sm text-muted-foreground">
+                          {new Date(user.updatedAt).toLocaleString()}
+                        </div>
+                        
+                        <div className="hidden lg:flex items-center">
+                          {getRiskBadge(user.riskScore)}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertTriangle 
+                                  className={`ml-2 w-4 h-4 ${
+                                    user.riskScore > 0.7 ? 'text-red-500' :
+                                    user.riskScore > 0.4 ? 'text-yellow-500' :
+                                    'text-green-500'
+                                  }`} 
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Risk score: {user.riskScore?.toFixed(2) || 'N/A'}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        
+                        <div className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>
+                                <User className="w-4 h-4 mr-2" />
+                                Update Profile
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuSeparator />
+                              
+                              {/* <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'admin')}>
+                                <Shield className="w-4 h-4 mr-2 text-red-500" />
+                                Make Admin
+                              </DropdownMenuItem> */}
+                              
+                              <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'department_head')}>
+                                <Shield className="w-4 h-4 mr-2 text-blue-500" />
+                                Make Department Head
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'employee')}>
+                                <Shield className="w-4 h-4 mr-2 text-green-500" />
+                                Make User
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'guest')}>
+                                <Shield className="w-4 h-4 mr-2 text-gray-500" />
+                                Make Guest
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuSeparator />
+                              
+                              <DropdownMenuItem onSelect={() => handleResetMFA(user.id)}>
+                                <History className="w-4 h-4 mr-2" />
+                                Reset MFA
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem 
+                                onSelect={() => disableUser(user.id)}
+                                className="text-red-500"
+                              >
+                                <AlertTriangle className="w-4 h-4 mr-2" />
+                                Disable Account
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
-                      
-                      <div className="hidden sm:block">
-                        <Badge variant={
-                          user.role === 'admin' ? 'destructive' :
-                          user.role === 'manager' ? 'default' :
-                          user.role === 'user' ? 'secondary' :
-                          'outline'
-                        }>
-                          {user.role}
-                        </Badge>
-                      </div>
-                      
-                      <div className="hidden md:block text-sm text-muted-foreground">
-                        {new Date(user.lastLogin).toLocaleString()}
-                      </div>
-                      
-                      <div className="hidden lg:flex items-center">
-                        {getRiskBadge(user.riskScore)}
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <AlertTriangle 
-                                className={`ml-2 w-4 h-4 ${
-                                  user.riskScore > 0.7 ? 'text-red-500' :
-                                  user.riskScore > 0.4 ? 'text-yellow-500' :
-                                  'text-green-500'
-                                }`} 
-                              />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Risk score: {user.riskScore.toFixed(2)}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      
-                      <div className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <User className="w-4 h-4 mr-2" />
-                              View Profile
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuSeparator />
-                            
-                            <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'admin')}>
-                              <Shield className="w-4 h-4 mr-2 text-red-500" />
-                              Make Admin
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'manager')}>
-                              <Shield className="w-4 h-4 mr-2 text-blue-500" />
-                              Make Manager
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'user')}>
-                              <Shield className="w-4 h-4 mr-2 text-green-500" />
-                              Make User
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'guest')}>
-                              <Shield className="w-4 h-4 mr-2 text-gray-500" />
-                              Make Guest
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuSeparator />
-                            
-                            <DropdownMenuItem onSelect={() => handleResetMFA(user.id)}>
-                              <History className="w-4 h-4 mr-2" />
-                              Reset MFA
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem 
-                              onSelect={() => disableUser(user.id)}
-                              className="text-red-500"
-                            >
-                              <AlertTriangle className="w-4 h-4 mr-2" />
-                              Disable Account
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="py-8 text-center">
+                      <User className="w-10 h-10 mx-auto text-muted-foreground" />
+                      <h3 className="mt-4 text-lg font-medium">No users found</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Try adjusting your search or filter criteria
+                      </p>
                     </div>
-                  ))
-                ) : (
-                  <div className="py-8 text-center">
-                    <User className="w-10 h-10 mx-auto text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-medium">No users found</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Try adjusting your search or filter criteria
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
         
@@ -779,12 +550,12 @@ const Users: React.FC = () => {
                   <span className="font-semibold">{users.filter(u => u.role === 'admin').length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Managers</span>
-                  <span className="font-semibold">{users.filter(u => u.role === 'manager').length}</span>
+                  <span>Department Heads</span>
+                  <span className="font-semibold">{users.filter(u => u.role === 'department_head').length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Users</span>
-                  <span className="font-semibold">{users.filter(u => u.role === 'user').length}</span>
+                  <span className="font-semibold">{users.filter(u => u.role === 'employee').length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Guests</span>
@@ -830,19 +601,19 @@ const Users: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button variant="outline" className="w-full justify-start">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4" />
                     <span>Security Audit</span>
                   </div>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button variant="outline" className="w-full justify-start">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" />
                     <span>MFA Compliance Check</span>
                   </div>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button variant="outline" className="w-full justify-start">
                   <div className="flex items-center gap-2">
                     <Search className="w-4 h-4" />
                     <span>Risk Assessment</span>
@@ -896,15 +667,15 @@ const Users: React.FC = () => {
                 <Label htmlFor="role">Role</Label>
                 <Select 
                   value={newUser.role} 
-                  onValueChange={(value: any) => setNewUser({...newUser, role: value})}
+                  onValueChange={(value) => setNewUser({...newUser, role: value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="department_head">Manager</SelectItem>
+                    <SelectItem value="employee">User</SelectItem>
                     <SelectItem value="guest">Guest</SelectItem>
                   </SelectContent>
                 </Select>

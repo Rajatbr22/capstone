@@ -199,10 +199,10 @@ const TopBar: React.FC = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <NavLink to="/profile">Profile</NavLink>
+                <NavLink to={auth.user.role === 'admin' ? `/profile/${auth.user.id}` : `/profile/${auth.user.id}/${auth.user.department_id}`}>Profile</NavLink>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <NavLink to="/settings">Settings</NavLink>
+                <NavLink to={auth.user.role === 'admin' ? `/settings/${auth.user.id}` : `/settings/${auth.user.id}/${auth.user.department_id}`}>Settings</NavLink>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>

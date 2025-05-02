@@ -22,8 +22,7 @@ const Layout: React.FC<LayoutProps> = ({
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [sessionProgress, setSessionProgress] = useState(100);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
-
-  // Using try/catch to prevent errors when context isn't available
+  
   let auth = { isAuthenticated: false, mfaVerified: false, user: null, sessionExpiry: null };
   let checkAccess = (role: Role) => false;
   
@@ -59,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({
     
     const updateProgress = () => {
       const now = new Date();
-      const expiresAt = sessionInfo.expiresAt;
+      const expiresAt = new Date(sessionInfo.expiresAt);;
       const totalSessionTime = sessionInfo.maxInactiveTime;
       const timeLeft = expiresAt.getTime() - now.getTime();
       
@@ -78,7 +77,7 @@ const Layout: React.FC<LayoutProps> = ({
     updateProgress();
     
     // Set up interval to update progress
-    const interval = setInterval(updateProgress, 1000);
+    const interval = setInterval(updateProgress, 60000);
     
     // Reset lastActivity on user interaction
     const resetActivity = () => {
@@ -99,7 +98,7 @@ const Layout: React.FC<LayoutProps> = ({
       clearInterval(interval);
       events.forEach(event => window.removeEventListener(event, resetActivity));
     };
-  }, [sessionInfo, auth.isAuthenticated, navigate]);
+  }, []);
   
   // Handle authentication and authorization checks
   useEffect(() => {

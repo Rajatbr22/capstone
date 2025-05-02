@@ -42,10 +42,10 @@ function App() {
       localStorage.removeItem('currentOTP');
     }
     
-    console.log('App: Initializing with MFA status:', {
-      mfaVerified: localStorage.getItem('mfaVerified'),
-      hasAuthToken: !!localStorage.getItem('supabase.auth.token'),
-    });
+    // console.log('App: Initializing with MFA status:', {
+    //   mfaVerified: localStorage.getItem('mfaVerified'),
+    //   hasAuthToken: !!localStorage.getItem('supabase.auth.token'),
+    // });
     
 
     const createSupabaseBuckets = async () => {

@@ -14,7 +14,7 @@ export interface User {
   lockout_until: Date;
 }
 
-export type Role = 'admin' | 'department_manager' | 'employee' | 'guest';
+export type Role = 'admin' | 'department_head' | 'employee' | 'guest';
 
 export interface File {
   id: string;

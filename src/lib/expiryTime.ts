@@ -5,7 +5,7 @@ export const setExpiryBasedOnRole = (role) => {
         case "admin":
         expiryTime.setMinutes(expiryTime.getMinutes() + 60);
         break;
-        case "department_manager":
+        case "department_head":
         expiryTime.setMinutes(expiryTime.getMinutes() + 45);
         break;
         case "employee":

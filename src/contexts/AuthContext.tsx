@@ -125,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               },
               // Preserve existing MFA status rather than resetting it
               mfaVerified: prevAuth.mfaVerified || !data.user.mfaEnabled,
-              sessionExpiry: prevAuth.sessionExpiry,
+              sessionExpiry: prevAuth.sessionExpiry || data.user.expiryTimestamp,
             };
             
             // Ensure we update localStorage
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   
     checkSession();
-  }, [navigate]);
+  },[]);
   
   
   // Check for session expiry
@@ -201,34 +201,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Update the setupUserSession function to preserve MFA status
-const setupUserSession = (userData: any) => {
-  setAuth(prevAuth => {
-    const user: User = {
-      id: userData.id,
-      username: userData.email.split("@")[0],
-      email: userData.email,
-      role: userData.role,
-      mfaEnabled: userData.mfaEnabled || true,
-      riskScore: 0.1,
-      department_id: userData.departmentId, 
-      departmentName: userData.departmentName,
-      failed_login_attempts: 0,
-      account_locked: false,
-    };
-    
-    // Set session expiry
-    const expiryTime = setExpiryBasedOnRole(userData.role)
-    // Preserve MFA status when possible
-    const mfaVerified = prevAuth.mfaVerified || !user.mfaEnabled;
-    
-    return {
-      isAuthenticated: true,
-      user,
-      mfaVerified,
-      sessionExpiry: expiryTime,
-    };
-  });
-};
+  const setupUserSession = (userData: any) => {
+    setAuth(prevAuth => {
+      const user: User = {
+        id: userData.id,
+        username: userData.email.split("@")[0],
+        email: userData.email,
+        role: userData.role,
+        mfaEnabled: userData.mfaEnabled || true,
+        riskScore: 0.1,
+        department_id: userData.departmentId, 
+        departmentName: userData.departmentName,
+        failed_login_attempts: 0,
+        account_locked: false,
+      };
+      
+      // Set session expiry
+      // const expiryTime = userData.session
+      // Preserve MFA status when possible
+      const mfaVerified = prevAuth.mfaVerified || !user.mfaEnabled;
+      const expiresAt = prevAuth.sessionExpiry || userData.expiryTimestamp
+      
+      return {
+        isAuthenticated: true,
+        user,
+        mfaVerified,
+        sessionExpiry: expiresAt,
+      };
+    });
+  };
 
   const isSessionExpired = () => {
     if (!auth.sessionExpiry) return true;
@@ -253,11 +254,10 @@ const setupUserSession = (userData: any) => {
         }
         
         // Reset session expiry
-        const expiryTime = setExpiryBasedOnRole(data.user.role)
+        // const expiryTime = setExpiryBasedOnRole(data.user.role)
         
         setAuth(prev => ({
           ...prev,
-          sessionExpiry: expiryTime
         }));
       }
     } catch (err) {
@@ -832,7 +832,7 @@ const setupUserSession = (userData: any) => {
     // Role hierarchy: admin > manager > user > guest
     const roleHierarchy: Record<Role, number> = {
       'admin': 4,
-      'department_manager': 3,
+      'department_head': 3,
       'employee': 2,
       'guest': 1
     };

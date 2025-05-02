@@ -23,7 +23,7 @@ const Settings: React.FC = () => {
   };
   
   return (
-    <Layout requireAuth={true} requiredRole="user">
+    <Layout requireAuth={true} requiredRole="employee">
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-3xl font-bold">Security Settings</h1>
