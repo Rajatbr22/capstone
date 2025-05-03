@@ -493,7 +493,7 @@ const Users = () => {
                               
                               <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'employee')}>
                                 <Shield className="w-4 h-4 mr-2 text-green-500" />
-                                Make User
+                                Make Employee
                               </DropdownMenuItem>
                               
                               <DropdownMenuItem onSelect={() => handleUserRoleChange(user.id, 'guest')}>

@@ -220,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // const expiryTime = userData.session
       // Preserve MFA status when possible
       const mfaVerified = prevAuth.mfaVerified || !user.mfaEnabled;
-      const expiresAt = prevAuth.sessionExpiry || userData.expiryTimestamp
+      const expiresAt = prevAuth.sessionExpiry
       
       return {
         isAuthenticated: true,
@@ -357,8 +357,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
 };
-
-
 
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
@@ -578,200 +576,271 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const sendMfaCode = async (email: string): Promise<boolean> => {
-    // try {
-    //   const response = await fetch(`${API_URL}/auth/send-mfa`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ email })
-    //   });
-      
-    //   const data = await response.json();
-      
-    //   if (!response.ok) {
-    //     throw new Error(data.message || 'Failed to send MFA code');
-    //   }
-      
-    //   if (data.success) {
-    //     toast({
-    //       title: "OTP Code Sent",
-    //       description: `A verification code has been sent to ${email}`,
-    //     });
-        
-    //     // For development, store OTP locally if provided in response
-    //     if (data.devOtp) {
-    //       localStorage.setItem('currentOTP', data.devOtp);
-    //       console.log('OTP code for testing:', data.devOtp);
-    //     }
-        
-    //     return true;
-    //   } else {
-    //     toast({
-    //       title: "Failed to Send Code",
-    //       description: data.message || "Could not send verification code",
-    //       variant: "destructive",
-    //     });
-    //     return false;
-    //   }
-    // } catch (error) {
-    //   console.error('Error sending MFA code:', error);
-    //   toast({
-    //     title: "Failed to Send Code",
-    //     description: "An error occurred while sending the verification code",
-    //     variant: "destructive",
-    //   });
-    //   return false;
-    // }
-
     try {
-            // In a real implementation, send OTP via Supabase Edge Function
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            localStorage.setItem('currentOTP', otp);
-            console.log('OTP code for testing:', otp);
+
+      const token = sessionStorage.getItem('token');
+      if (!token) {
+        console.log('No auth token, cannot refresh session');
+        return;
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem('currentOTP', otp);
+      console.log('OTP code for testing:', otp);
             
-            toast({
-              title: "OTP Code Sent",
-              description: `A verification code has been sent to ${email}`,
-            });
-            
-            return true;
-    } catch (error) {
-      console.error('Error sending MFA code:', error);
+      // toast({
+      //   title: "OTP Code Sent",
+      //   description: `A verification code has been sent to ${email}`,
+      // });
+
+      const response = await fetch(`${API_URL}/auth/request-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          toEmail: email,
+          otp: otp
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send MFA code');
+      }
+      
+      if (data.success) {
+        toast({
+          title: "OTP Code Sent",
+          description: `A verification code has been sent to ${email}`,
+        });
+        
+        // For development, store OTP locally if provided in response
+        // if (data.devOtp) {
+        //   localStorage.setItem('currentOTP', data.devOtp);
+        //   console.log('OTP code for testing:', data.devOtp);
+        // }
+        
+        return true;
+      } else {
         toast({
           title: "Failed to Send Code",
-          description: "An error occurred while sending the verification code",
+          description: data.message || "Could not send verification code",
           variant: "destructive",
         });
         return false;
+      }
+    } catch (error) {
+      console.error('Error sending MFA code:', error);
+      toast({
+        title: "Failed to Send Code",
+        description: "An error occurred while sending the verification code",
+        variant: "destructive",
+      });
+      return false;
     }
   };
 
   const verifyMfa = async (code: string): Promise<boolean> => {
-    // try {
-    //   if (code.length !== 6 || !/^\d+$/.test(code)) {
-    //     toast({
-    //       title: "Verification Failed",
-    //       description: "Invalid verification code. Must be 6 digits.",
-    //       variant: "destructive",
-    //     });
-    //     return false;
-    //   }
+    
+    const token = sessionStorage.getItem('token');
+      if (!token) {
+        console.log('No auth token, cannot refresh session');
+        return;
+      }
       
-    //   const response = await fetch(`${API_URL}/auth/verify-mfa`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ 
-    //       code,
-    //       userId: auth.user?.id
-    //     })
-    //   });
-      
-    //   const data = await response.json();
-      
-    //   if (!response.ok) {
-    //     throw new Error(data.message || 'Failed to verify MFA');
-    //   }
-      
-    //   if (data.success) {
-    //     // Mark MFA as verified
-    //     setAuth(prev => ({
-    //       ...prev,
-    //       mfaVerified: true,
-    //     }));
-        
-    //     // Clean up OTP if stored locally
-    //     localStorage.removeItem('currentOTP');
-        
-    //     // Update token if a new one is provided
-    //     if (data.token) {
-    //       localStorage.setItem('authToken', data.token);
-    //     }
-        
-    //     toast({
-    //       title: "Verification Successful",
-    //       description: "MFA verification completed successfully",
-    //     });
-        
-    //     return true;
-    //   } else {
-    //     toast({
-    //       title: "Verification Failed",
-    //       description: data.message || "Invalid verification code",
-    //       variant: "destructive",
-    //     });
-    //     return false;
-    //   }
-    // } catch (error) {
-    //   console.error('Error verifying MFA:', error);
-    //   toast({
-    //     title: "Verification Failed",
-    //     description: error.message || "An error occurred during verification",
-    //     variant: "destructive",
-    //   });
-    //   return false;
-    // }
-
     try {
-            if (code.length !== 6 || !/^\d+$/.test(code)) {
-              toast({
-                title: "Verification Failed",
-                description: "Invalid verification code. Must be 6 digits.",
-                variant: "destructive",
-              });
-              return false;
-            }
-            
-            // For testing purposes, check against localStorage OTP
-            const storedOTP = localStorage.getItem('currentOTP');
-            
-            // For development, allow any 6-digit code if no stored OTP
-            if (storedOTP && storedOTP !== code) {
-              toast({
-                title: "Verification Failed",
-                description: "Invalid verification code.",
-                variant: "destructive",
-              });
-              return false;
-            }
-            
-            // Mark MFA as verified
-            // setAuth(prev => ({
-            //   ...prev,
-            //   mfaVerified: true,
-            // }));
+      if (code.length !== 6 || !/^\d+$/.test(code)) {
+        toast({
+          title: "Verification Failed",
+          description: "Invalid verification code. Must be 6 digits.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
+      const response = await fetch(`${API_URL}/auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
 
-            setAuth((prev) => {
-              const updatedAuth = {
-                ...prev,
-                mfaVerified: true,
-              };
-              
-              // Immediately save to localStorage to ensure persistence
-              localStorage.setItem('auth', JSON.stringify(updatedAuth));
-              
-              return updatedAuth;
-            });
+        },
+        body: JSON.stringify({ 
+          email: auth.user?.email,
+          otp: code,
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to verify MFA');
+      }
+      
+      if (data.success) {
+        // Mark MFA as verified
+        setAuth(prev => ({
+          ...prev,
+          mfaVerified: true,
+        }));
+        
+        // Clean up OTP if stored locally
+        localStorage.removeItem('currentOTP');
+        
+        // Update token if a new one is provided
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+        
+        toast({
+          title: "Verification Successful",
+          description: "MFA verification completed successfully",
+        });
+        
+        return true;
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: data.message || "Invalid verification code",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error verifying MFA:', error);
+      toast({
+        title: "Verification Failed",
+        description: error.message || "An error occurred during verification",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // try {
+    //         if (code.length !== 6 || !/^\d+$/.test(code)) {
+    //           toast({
+    //             title: "Verification Failed",
+    //             description: "Invalid verification code. Must be 6 digits.",
+    //             variant: "destructive",
+    //           });
+    //           return false;
+    //         }
             
-            // Clean up OTP
-            localStorage.removeItem('currentOTP');
-            toast({
-              title: "Verification Successful",
-              description: "MFA verification completed successfully",
-            })
-            // Let the component handle navigation
-            return true;
-          } catch (error) {
-            console.error('Error verifying MFA:', error);
-            toast({
-              title: "Verification Failed",
-              description: "An error occurred during verification",
-              variant: "destructive",
-            });
-            return false;
-          }
+    //         // For testing purposes, check against localStorage OTP
+    //         const storedOTP = localStorage.getItem('currentOTP');
+            
+    //         // For development, allow any 6-digit code if no stored OTP
+    //         if (storedOTP && storedOTP !== code) {
+    //           toast({
+    //             title: "Verification Failed",
+    //             description: "Invalid verification code.",
+    //             variant: "destructive",
+    //           });
+    //           return false;
+    //         }
+            
+    //         // Mark MFA as verified
+    //         // setAuth(prev => ({
+    //         //   ...prev,
+    //         //   mfaVerified: true,
+    //         // }));
+
+    //         setAuth((prev) => {
+    //           const updatedAuth = {
+    //             ...prev,
+    //             mfaVerified: true,
+    //           };
+              
+    //           // Immediately save to localStorage to ensure persistence
+    //           localStorage.setItem('auth', JSON.stringify(updatedAuth));
+              
+    //           return updatedAuth;
+    //         });
+            
+    //         // Clean up OTP
+    //         localStorage.removeItem('currentOTP');
+    //         toast({
+    //           title: "Verification Successful",
+    //           description: "MFA verification completed successfully",
+    //         })
+    //         // Let the component handle navigation
+    //         return true;
+    //       } catch (error) {
+    //         console.error('Error verifying MFA:', error);
+    //         toast({
+    //           title: "Verification Failed",
+    //           description: "An error occurred during verification",
+    //           variant: "destructive",
+    //         });
+    //         return false;
+    //       }
+  };
+
+  const resendOtp = async (email: string) => {
+    try {
+
+      const token = sessionStorage.getItem('token');
+      if (!token) {
+        console.log('No auth token, cannot refresh session');
+        return;
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem('currentOTP', otp);
+      console.log('resend otp for testing:', otp);
+
+
+      const response = await fetch(`${API_URL}/auth/resend-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          toEmail: email,
+          otp: otp
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send MFA code');
+      }
+      
+      if (data.success) {
+        toast({
+          title: "OTP Code Resent",
+          description: `A new verification code has been sent to ${email}`,
+        });
+        
+        // For development, store OTP locally if provided in response
+        // if (data.devOtp) {
+        //   localStorage.setItem('currentOTP', data.devOtp);
+        //   console.log('OTP code for testing:', data.devOtp);
+        // }
+        
+        return true;
+      } else {
+        toast({
+          title: "Failed to Send Code",
+          description: data.message || "Could not send verification code",
+          variant: "destructive",
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending MFA code:', error);
+      toast({
+        title: "Failed to Send Code",
+        description: "An error occurred while sending the verification code",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   const logout = async () => {

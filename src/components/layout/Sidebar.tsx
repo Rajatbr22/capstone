@@ -79,8 +79,10 @@ const Sidebar: React.FC = () => {
               {auth.user.email.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div className="font-medium text-sidebar-foreground">{auth.user.email}</div>
-              <div className="text-xs text-sidebar-foreground/70 flex items-center justify-between mt-2">
+              <div className="font-medium text-sidebar-foreground">
+                {auth.user.email.split('@')[0]}
+              </div>
+              <div className="text-xs text-sidebar-foreground/70 flex items-center justify-between gap-4 mt-2">
                 <span>role: {auth.user.role}</span>
                 <span className='font-semibold text-black bg-gradient-to-r from-green-300 to-blue-300 hover:from-pink-500 hover:to-yellow-500 hover:text-white p-1 rounded'>{auth.user.departmentName}</span>
               </div>
