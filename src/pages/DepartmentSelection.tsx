@@ -99,7 +99,7 @@ const DepartmentSelection: React.FC = () => {
         setSelectedDepartment(id);
       }
 
-      logActivity('department_selection_page_accessed', 'navigation', 'low');
+      // logActivity('department_selection_page_accessed', 'navigation', 'low');
     };
 
     checkAuthentication();

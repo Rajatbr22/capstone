@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   Shield, 
@@ -19,7 +19,37 @@ import { setExpiryBasedOnRole } from '@/lib/expiryTime';
 
 const Sidebar: React.FC = () => {
   const { auth, logout, checkAccess } = useAuth();
-  const expiryTime = setExpiryBasedOnRole(auth.user.role)
+  const [expiryTime, setExpiryTime] = useState(() => {
+    const timeLeftMs = new Date(auth.sessionExpiry).getTime() - Date.now();
+    return {
+      minutes: Math.floor(Math.max(0, timeLeftMs) / 60000),
+      seconds: Math.floor((Math.max(0, timeLeftMs) % 60000) / 1000)
+    };
+  });
+
+  useEffect(() => {
+    // Update the timer every second
+    const interval = setInterval(() => {
+      const timeLeftMs = new Date(auth.sessionExpiry).getTime() - Date.now();
+      
+      if (timeLeftMs <= 0) {
+        clearInterval(interval);
+        setExpiryTime({ minutes: 0, seconds: 0 });
+        // You might want to handle session expiration here
+        // For example: logout(), showExpiryMessage(), etc.
+      } else {
+        setExpiryTime({
+          minutes: Math.floor(timeLeftMs / 60000),
+          seconds: Math.floor((timeLeftMs % 60000) / 1000)
+        });
+      }
+    }, 1000); // Update every second
+  
+    // Cleanup function
+    return () => clearInterval(interval);
+  }, []); 
+
+  const formattedTime = `${expiryTime.minutes}:${expiryTime.seconds.toString().padStart(2, '0')}`;
 
   const navItems = [
     {
@@ -144,7 +174,7 @@ const Sidebar: React.FC = () => {
         <div className="flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
           <span>
-            Session expires in: <span className='animate-pulse'>{Math.max(0, Math.floor((new Date(auth.sessionExpiry).getTime() - Date.now()) / 60000))}{" "}minutes</span> 
+            Session expires in: <span className='animate-pulse'>{formattedTime}{" "}minutes</span> 
           </span>
         </div>
       </div>

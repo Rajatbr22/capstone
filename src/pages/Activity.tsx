@@ -334,12 +334,16 @@ const Activity: React.FC = () => {
                               
                               <div className="flex items-center gap-1">
                                 <Computer className="w-3 h-3" />
-                                <span>{activity.deviceInfo}</span>
+                                <span>
+                                {
+                                  activity.userAgent
+                                }
+                                </span>
                               </div>
                               
                               <div className="flex items-center gap-1">
                                 <MapPin className="w-3 h-3" />
-                                <span>{activity.location || 'Unknown location'}</span>
+                                <span>{activity.location}</span>
                               </div>
                             </div>
                           </div>

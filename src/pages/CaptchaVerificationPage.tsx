@@ -156,7 +156,7 @@ const CaptchaVerificationPage: React.FC = () => {
       }
       
       // Log page access for security auditing
-      logActivity('captcha_page_accessed', 'security', 'low');
+      // logActivity('captcha_page_accessed', 'security', 'low');
     };
     
     performInitialChecks();

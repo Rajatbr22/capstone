@@ -130,7 +130,7 @@ const MFAVerification = () => {
   const handleSendCode = async () => {
     if (!auth.user?.email) {
       setError('Could not determine email address for sending code.');
-      logActivity('mfa_code_send_failed', 'security', 'medium');
+      // logActivity('mfa_code_send_failed', 'security', 'medium');
       return false;
     }
     
@@ -150,17 +150,17 @@ const MFAVerification = () => {
           title: "Verification Code Sent",
           description: `A verification code has been sent to ${auth.user.email}`
         });
-        logActivity('mfa_code_sent', 'security', 'low');
+        // logActivity('mfa_code_sent', 'security', 'low');
         return true;
       } else {
         setError('Failed to send verification code. Please try again.');
-        logActivity('mfa_code_send_failed', 'security', 'medium');
+        // logActivity('mfa_code_send_failed', 'security', 'medium');
         return false;
       }
     } catch (error) {
       console.error('Error sending MFA code:', error);
       setError('An error occurred while sending the code. Please try again.');
-      logActivity('mfa_code_send_error', 'security', 'high');
+      // logActivity('mfa_code_send_error', 'security', 'high');
       return false;
     } finally {
       setIsResending(false);
@@ -205,7 +205,7 @@ const MFAVerification = () => {
     } catch (error) {
       console.error('MFA verification error:', error);
       setError('An error occurred during verification. Please try again.');
-      logActivity('mfa_verification_error', 'security', 'high');
+      // logActivity('mfa_verification_error', 'security', 'high');
     } finally {
       setIsSubmitting(false);
     }

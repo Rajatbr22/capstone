@@ -232,14 +232,14 @@ const CaptchaVerification: React.FC<CaptchaVerificationProps> = ({
             setTimeout(() => {
                 try {
                     captchaEngine.createCaptchaCanvas('captcha-canvas');
-                    logActivity('captcha_loaded', 'security', 'low');
+                    // logActivity('captcha_loaded', 'security', 'low');
                 } catch (innerError) {
                     console.error("Error creating captcha canvas:", innerError);
                 }
             }, 200);
         } catch (error) {
             console.error("Error loading captcha:", error);
-            logActivity('captcha_load_error', 'security', 'high');
+            // logActivity('captcha_load_error', 'security', 'high');
             
             // Fallback if captcha fails to load
             setTimeout(() => {
@@ -248,10 +248,10 @@ const CaptchaVerification: React.FC<CaptchaVerificationProps> = ({
                     captchaEngine.generateCaptcha(6);
                     captchaEngine.createCaptchaCanvas('captcha-canvas');
                     
-                    logActivity('captcha_loaded_retry', 'security', 'medium');
+                    // logActivity('captcha_loaded_retry', 'security', 'medium');
                 } catch (innerError) {
                     console.error("Second attempt to load captcha failed:", innerError);
-                    logActivity('captcha_load_error_retry', 'security', 'high');
+                    // logActivity('captcha_load_error_retry', 'security', 'high');
                     
                     toast({
                         title: "CAPTCHA Error",
@@ -275,14 +275,14 @@ const CaptchaVerification: React.FC<CaptchaVerificationProps> = ({
                     captchaEngine.createCaptchaCanvas('captcha-canvas');
                     setCaptchaValue('');
                     setCaptchaError(false);
-                    logActivity('captcha_refreshed', 'security', 'low');
+                    // logActivity('captcha_refreshed', 'security', 'low');
                 } catch (innerError) {
                     console.error("Error refreshing captcha canvas:", innerError);
                 }
             }, 100);
         } catch (error) {
             console.error("Error refreshing captcha:", error);
-            logActivity('captcha_refresh_error', 'security', 'medium');
+            // logActivity('captcha_refresh_error', 'security', 'medium');
             toast({
                 title: "Captcha Error",
                 description: "Could not refresh the CAPTCHA. Please try again or refresh the page.",
@@ -342,7 +342,7 @@ const CaptchaVerification: React.FC<CaptchaVerificationProps> = ({
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         
-        logActivity('captcha_failed', 'security', 'medium');
+        // logActivity('captcha_failed', 'security', 'medium');
         
         toast({
             title: "CAPTCHA Failed",

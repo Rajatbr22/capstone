@@ -125,16 +125,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               },
               // Preserve existing MFA status rather than resetting it
               mfaVerified: prevAuth.mfaVerified || !data.user.mfaEnabled,
-              sessionExpiry: prevAuth.sessionExpiry || data.user.expiryTimestamp,
+              sessionExpiry: data.user.expiryTimestamp,
             };
             
             // Ensure we update localStorage
             localStorage.setItem('auth', JSON.stringify(updatedAuth));
-            
+            console.log('session expired at: ', data.user.expiryTimestamp)
             return updatedAuth;
           });
           if (data.user.mfaEnabled && !auth.mfaVerified) {
-            navigate(`/mfa-verification/${auth.user.id}`);
+            navigate(`/mfa-verification/${data.user.id}`);
           }
         } else {
           setTimeout(() => {
@@ -204,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setupUserSession = (userData: any) => {
     setAuth(prevAuth => {
       const user: User = {
-        id: userData.id,
+        id: userData._id,
         username: userData.email.split("@")[0],
         email: userData.email,
         role: userData.role,
@@ -220,7 +220,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // const expiryTime = userData.session
       // Preserve MFA status when possible
       const mfaVerified = prevAuth.mfaVerified || !user.mfaEnabled;
-      const expiresAt = prevAuth.sessionExpiry
+      const expiresAt = userData.sessionExpiresAt
+      console.log('session expires at: ', prevAuth.sessionExpiry)
       
       return {
         isAuthenticated: true,
@@ -490,7 +491,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Check if MFA is enabled
         if (data.mfaEnabled) {
           await sendMfaCode(data.email);
-          navigate(`/mfa-verification/${auth.user.id}`);
+          navigate(`/mfa-verification/${data.user.id}`);
         }
       }
     } catch (error) {

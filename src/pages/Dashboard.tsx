@@ -250,7 +250,7 @@ const Dashboard: React.FC = () => {
                 <ul className="space-y-2">
                   {recentActivities.map((activity) => (
                     <li key={activity.id} className="border-b pb-2 last:border-0">
-                      User {activity.userId} {activity.action} {activity.resource}.
+                      {auth.user.username} {activity.action} {activity.resource}.
                     </li>
                   ))}
                 </ul>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +21,7 @@ const Layout: React.FC<LayoutProps> = ({
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [sessionProgress, setSessionProgress] = useState(100);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ minutes: 0, seconds: 0 });
   
   let auth = { isAuthenticated: false, mfaVerified: false, user: null, sessionExpiry: null };
   let checkAccess = (role: Role) => false;
@@ -38,9 +38,27 @@ const Layout: React.FC<LayoutProps> = ({
   useEffect(() => {
     if (auth.isAuthenticated && auth.sessionExpiry) {
       // Create session info with 30-minute expiry
+
+      const getMaxInactiveTime = () => {
+        let maxTime = 30 * 60 * 1000; 
+        if (auth.user?.role === 'admin') {
+          maxTime = 60 * 60 * 1000; // 60 minutes for admins
+        } else if (auth.user?.role === 'department_head') {
+          maxTime = 45 * 60 * 1000; // 45 minutes for managers
+        } else if (auth.user?.role === 'employee') {
+          maxTime = 30 * 60 * 1000; // 30 minutes for basic users
+        } else if (auth.user?.role === 'guest') {
+          maxTime = 15 * 60 * 1000; // 15 minutes for basic users
+        }
+        
+        return maxTime;
+      };
+
       const sessionExpiryTime = auth.sessionExpiry;
       const lastActivity = new Date();
-      const maxInactiveTime = 30 * 60 * 1000; // 30 minutes in milliseconds
+      const maxInactiveTime = getMaxInactiveTime()
+
+
       
       setSessionInfo({
         expiresAt: sessionExpiryTime,
@@ -52,23 +70,29 @@ const Layout: React.FC<LayoutProps> = ({
     }
   }, [auth.isAuthenticated, auth.sessionExpiry]);
   
-  // Update session progress bar
+  // Update session progress bar and time left
   useEffect(() => {
     if (!sessionInfo || !auth.isAuthenticated) return;
     
     const updateProgress = () => {
       const now = new Date();
-      const expiresAt = new Date(sessionInfo.expiresAt);;
+      const expiresAt = new Date(sessionInfo.expiresAt);
       const totalSessionTime = sessionInfo.maxInactiveTime;
-      const timeLeft = expiresAt.getTime() - now.getTime();
+      const timeLeftMs = expiresAt.getTime() - now.getTime();
+      
+      // Calculate minutes and seconds left
+      const minutes = Math.floor(Math.max(0, timeLeftMs) / 60000);
+      const seconds = Math.floor((Math.max(0, timeLeftMs) % 60000) / 1000);
+      setTimeLeft({ minutes, seconds });
       
       // Calculate progress percentage (100% to 0%)
-      const newProgress = Math.max(0, Math.min(100, (timeLeft / totalSessionTime) * 100));
+      const newProgress = Math.max(0, Math.min(100, (timeLeftMs / totalSessionTime) * 100));
       setSessionProgress(newProgress);
       
       // Redirect to login when session expires
-      if (timeLeft <= 0) {
-        localStorage.removeItem('mfaVerified');
+      if (timeLeftMs <= 0) {
+        // sessionStorage.clear();
+        // localStorage.clear();
         navigate('/login', { replace: true });
       }
     };
@@ -76,17 +100,27 @@ const Layout: React.FC<LayoutProps> = ({
     // Update progress initially
     updateProgress();
     
-    // Set up interval to update progress
-    const interval = setInterval(updateProgress, 60000);
+    // Set up interval to update progress every second for smoother updates
+    const interval = setInterval(updateProgress, 1000);
     
     // Reset lastActivity on user interaction
     const resetActivity = () => {
       if (sessionInfo) {
+        const newExpiresAt = new Date(Date.now() + sessionInfo.maxInactiveTime);
         setSessionInfo({
           ...sessionInfo,
           lastActivity: new Date(),
-          expiresAt: new Date(Date.now() + sessionInfo.maxInactiveTime),
+          expiresAt: newExpiresAt,
         });
+        
+        // Immediately update the progress after resetting the activity
+        const timeLeftMs = newExpiresAt.getTime() - Date.now();
+        const minutes = Math.floor(Math.max(0, timeLeftMs) / 60000);
+        const seconds = Math.floor((Math.max(0, timeLeftMs) % 60000) / 1000);
+        setTimeLeft({ minutes, seconds });
+        
+        const newProgress = Math.max(0, Math.min(100, (timeLeftMs / sessionInfo.maxInactiveTime) * 100));
+        setSessionProgress(newProgress);
       }
     };
     
@@ -98,7 +132,7 @@ const Layout: React.FC<LayoutProps> = ({
       clearInterval(interval);
       events.forEach(event => window.removeEventListener(event, resetActivity));
     };
-  }, []);
+  }, [sessionInfo, auth.isAuthenticated, navigate]);
   
   // Handle authentication and authorization checks
   useEffect(() => {
@@ -179,6 +213,9 @@ const Layout: React.FC<LayoutProps> = ({
     return null;
   }
   
+  // Format time left for display
+  const formattedTimeLeft = `${timeLeft.minutes}:${timeLeft.seconds.toString().padStart(2, '0')}`;
+  
   // Render the layout once all checks pass
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
@@ -194,7 +231,7 @@ const Layout: React.FC<LayoutProps> = ({
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                   <span>Session</span>
                   <span>
-                    {sessionProgress > 25 ? 'Active' : 'Expiring soon'}
+                    {sessionProgress > 25 ? `Active (${formattedTimeLeft})` : `Expiring soon (${formattedTimeLeft})`}
                   </span>
                 </div>
                 <Progress 
