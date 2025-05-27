@@ -9,6 +9,7 @@ import { nlpService, evaluateSecurityRisk } from '@/lib/nlp-service';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { uploadFileToSupabase, deleteFileFromSupabase } from '@/lib/file-upload';
 import { v4 as uuidv4 } from 'uuid';
+import fetchWithAuth from '@/lib/fetchInstance';
 
 interface FileContextType {
   files: File[];
@@ -144,7 +145,187 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   /**
    * Upload new files to Supabase or mock storage
    */
+  // const uploadFile = async (fileList: FileList): Promise<boolean> => {
+  //   if (!auth.user) {
+  //     toast({
+  //       title: "Authentication Required",
+  //       description: "You must be logged in to upload files",
+  //       variant: "destructive",
+  //     });
+  //     return false;
+  //   }
+    
+  //   setIsLoading(true);
+    
+  //   try {
+  //     const newFiles: File[] = [];
+      
+  //     // Process each file in the list
+  //     for (let i = 0; i < fileList.length; i++) {
+  //       const file = fileList[i];
+        
+  //       if (isSupabaseConfigured()) {
+  //         try {
+  //           console.log('Uploading to Supabase:', file.name);
+
+  //           const fileId = uuidv4();
+  //           const result = await uploadFileToSupabase(file);
+            
+  //           if (!result) {
+  //             console.error('Failed to upload file to Supabase storage');
+  //             continue;
+  //           }
+            
+  //           // Create a file record
+  //           const fileRecord: File = {
+  //             id: result.id,
+  //             name: file.name,
+  //             type: result.type,
+  //             size: file.size,
+  //             path: result.path,
+  //             publicUrl: result.publicUrl || '',
+  //             uploadedBy: auth.user.id,
+  //             uploadedAt: new Date(),
+  //             accessLevel: ['admin', 'manager', auth.user.role],
+  //             threatScore: 0,
+  //             tags: [],
+  //           };
+            
+  //           // Store file metadata in database
+  //           const { data, error } = await supabase
+  //             .from('files')
+  //             .insert({
+  //               id: fileRecord.id,
+  //               name: fileRecord.name,
+  //               type: fileRecord.type,
+  //               size: fileRecord.size,
+  //               path: fileRecord.path,
+  //               public_url: fileRecord.publicUrl,
+  //               uploaded_by: fileRecord.uploadedBy,
+  //               uploaded_at: new Date().toISOString(),
+  //               access_level: fileRecord.accessLevel,
+  //               threat_score: 0,
+  //               tags: []
+  //             })
+  //             .select();
+              
+  //           if (error) {
+  //             console.error('Error adding file to database:', error);
+  //           } else {
+  //             console.log('File added to database:', data);
+  //             newFiles.push(fileRecord);
+              
+  //             // Process file with NLP service right after upload (in background)
+  //             nlpService.processFileAndStoreResults(fileRecord)
+  //               .then(analysisResult => {
+  //                 if (analysisResult) {
+  //                   // Update the file with analysis results
+  //                   setFiles(prevFiles => 
+  //                     prevFiles.map(f => 
+  //                       f.id === fileRecord.id 
+  //                         ? {...f, 
+  //                           contentAnalysis: analysisResult, 
+  //                           threatScore: analysisResult.anomalyScore || 0
+  //                         } 
+  //                         : f
+  //                     )
+  //                   );
+  //                 }
+  //               })
+  //               .catch(err => console.error('Error analyzing file:', err));
+  //           }
+            
+  //         } catch (uploadError) {
+  //           console.error('Error uploading file to Supabase:', uploadError);
+  //         }
+  //       } else {
+  //         // Create a mock file object for non-Supabase mode
+  //         const fileRecord: File = {
+  //           id: `file-${Date.now()}-${i}`,
+  //           name: file.name,
+  //           type: file.name.split('.').pop()?.toLowerCase() || 'unknown',
+  //           size: file.size,
+  //           path: `/files/${file.name}`,
+  //           uploadedBy: auth.user.id,
+  //           uploadedAt: new Date(),
+  //           accessLevel: ['admin', 'manager', auth.user.role],
+  //           threatScore: 0,
+  //           tags: [],
+  //         };
+          
+  //         // For images, create a data URL for preview
+  //         if (file.type.startsWith('image/')) {
+  //           const reader = new FileReader();
+  //           await new Promise<void>((resolve) => {
+  //             reader.onload = () => {
+  //               fileRecord.content = reader.result as string;
+  //               resolve();
+  //             };
+  //             reader.readAsDataURL(file);
+  //           });
+  //         }
+          
+  //         // For text files, read the content
+  //         if (file.type === 'text/plain' || file.type === 'application/json') {
+  //           const reader = new FileReader();
+  //           await new Promise<void>((resolve) => {
+  //             reader.onload = () => {
+  //               fileRecord.content = reader.result as string;
+  //               resolve();
+  //             };
+  //             reader.readAsText(file);
+  //           });
+  //         }
+          
+  //         newFiles.push(fileRecord);
+  //       }
+  //     }
+      
+  //     // Add the new files to the state
+  //     setFiles(prevFiles => [...prevFiles, ...newFiles]);
+      
+  //     // Log the activity
+  //     if (newFiles.length > 0) {
+  //       logActivity('upload', newFiles.map(f => f.id).join(','));
+        
+  //       toast({
+  //         title: "Files Uploaded",
+  //         description: `Successfully uploaded ${newFiles.length} file(s)`,
+  //       });
+        
+  //       return true;
+  //     } else {
+  //       toast({
+  //         title: "Upload Failed",
+  //         description: "Could not upload any files",
+  //         variant: "destructive",
+  //       });
+        
+  //       return false;
+  //     }
+  //   } catch (error) {
+  //     console.error('Error uploading files:', error);
+  //     toast({
+  //       title: "Upload Failed",
+  //       description: "There was an error uploading your files",
+  //       variant: "destructive",
+  //     });
+  //     return false;
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+  
+
   const uploadFile = async (fileList: FileList): Promise<boolean> => {
+
+    const token = sessionStorage.getItem('token');
+
+    if (!token) {
+      console.log('No auth token, cannot refresh session');
+      return;
+    }
+
     if (!auth.user) {
       toast({
         title: "Authentication Required",
@@ -153,157 +334,78 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       return false;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const newFiles: File[] = [];
-      
-      // Process each file in the list
+
       for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i];
-        
-        if (isSupabaseConfigured()) {
-          try {
-            console.log('Uploading to Supabase:', file.name);
+        const formData = new FormData();
 
-            const fileId = uuidv4();
-            const result = await uploadFileToSupabase(file);
-            
-            if (!result) {
-              console.error('Failed to upload file to Supabase storage');
-              continue;
-            }
-            
-            // Create a file record
-            const fileRecord: File = {
-              id: result.id,
-              name: file.name,
-              type: result.type,
-              size: file.size,
-              path: result.path,
-              publicUrl: result.publicUrl || '',
-              uploadedBy: auth.user.id,
-              uploadedAt: new Date(),
-              accessLevel: ['admin', 'manager', auth.user.role],
-              threatScore: 0,
-              tags: [],
-            };
-            
-            // Store file metadata in database
-            const { data, error } = await supabase
-              .from('files')
-              .insert({
-                id: fileRecord.id,
-                name: fileRecord.name,
-                type: fileRecord.type,
-                size: fileRecord.size,
-                path: fileRecord.path,
-                public_url: fileRecord.publicUrl,
-                uploaded_by: fileRecord.uploadedBy,
-                uploaded_at: new Date().toISOString(),
-                access_level: fileRecord.accessLevel,
-                threat_score: 0,
-                tags: []
-              })
-              .select();
-              
-            if (error) {
-              console.error('Error adding file to database:', error);
-            } else {
-              console.log('File added to database:', data);
-              newFiles.push(fileRecord);
-              
-              // Process file with NLP service right after upload (in background)
-              nlpService.processFileAndStoreResults(fileRecord)
-                .then(analysisResult => {
-                  if (analysisResult) {
-                    // Update the file with analysis results
-                    setFiles(prevFiles => 
-                      prevFiles.map(f => 
-                        f.id === fileRecord.id 
-                          ? {...f, 
-                            contentAnalysis: analysisResult, 
-                            threatScore: analysisResult.anomalyScore || 0
-                          } 
-                          : f
-                      )
-                    );
-                  }
-                })
-                .catch(err => console.error('Error analyzing file:', err));
-            }
-            
-          } catch (uploadError) {
-            console.error('Error uploading file to Supabase:', uploadError);
-          }
-        } else {
-          // Create a mock file object for non-Supabase mode
-          const fileRecord: File = {
-            id: `file-${Date.now()}-${i}`,
-            name: file.name,
-            type: file.name.split('.').pop()?.toLowerCase() || 'unknown',
-            size: file.size,
-            path: `/files/${file.name}`,
-            uploadedBy: auth.user.id,
-            uploadedAt: new Date(),
-            accessLevel: ['admin', 'manager', auth.user.role],
-            threatScore: 0,
-            tags: [],
-          };
-          
-          // For images, create a data URL for preview
-          if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            await new Promise<void>((resolve) => {
-              reader.onload = () => {
-                fileRecord.content = reader.result as string;
-                resolve();
-              };
-              reader.readAsDataURL(file);
-            });
-          }
-          
-          // For text files, read the content
-          if (file.type === 'text/plain' || file.type === 'application/json') {
-            const reader = new FileReader();
-            await new Promise<void>((resolve) => {
-              reader.onload = () => {
-                fileRecord.content = reader.result as string;
-                resolve();
-              };
-              reader.readAsText(file);
-            });
-          }
-          
-          newFiles.push(fileRecord);
+        formData.append('file', file);
+        formData.append('userId', auth.user.id);
+        formData.append('uploadedByUserName', auth.user.username);
+        formData.append('accessLevel', auth.user.role);
+        formData.append('riskScore', 0);
+        formData.append('userName', auth.user.username)
+        formData.append('departmentId', auth.user.department_id);
+        formData.append('isPublic', 'true'); 
+        formData.append('tags', '');
+
+        const response = await fetchWithAuth('/files/upload', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to upload ${file.name}`);
+          continue;
         }
+
+        const uploaded = await response.json();
+        const fileRecord: File = {
+          id: uploaded._id,
+          name: uploaded.fileName,
+          type: uploaded.type,
+          size: uploaded.size,
+          path: uploaded.path,
+          publicUrl: uploaded.path,
+          uploadedBy: uploaded.uploadedByUserId,
+          uploadedAt: new Date(uploaded.createdAt),
+          accessLevel: uploaded.accessLevel,
+          threatScore: uploaded.riskScore,
+          tags: uploaded.tags,
+          contentAnalysis: uploaded.contentAnalysis,
+        };
+
+        newFiles.push(fileRecord);
       }
-      
-      // Add the new files to the state
-      setFiles(prevFiles => [...prevFiles, ...newFiles]);
-      
-      // Log the activity
+
       if (newFiles.length > 0) {
+        setFiles(prev => [...prev, ...newFiles]);
         logActivity('upload', newFiles.map(f => f.id).join(','));
-        
+
         toast({
           title: "Files Uploaded",
           description: `Successfully uploaded ${newFiles.length} file(s)`,
         });
-        
+
         return true;
       } else {
         toast({
           title: "Upload Failed",
-          description: "Could not upload any files",
+          description: "No files were uploaded",
           variant: "destructive",
         });
-        
         return false;
       }
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
         description: "There was an error uploading your files",
@@ -314,7 +416,11 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(false);
     }
   };
-  
+
+
+
+
+
   /**
    * Delete a file by ID from Supabase or mock storage
    */
