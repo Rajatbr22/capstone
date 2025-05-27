@@ -222,11 +222,11 @@ const Layout: React.FC<LayoutProps> = ({
       {auth.isAuthenticated && (
         <Sidebar />
       )}
-      {/* <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col">
         {auth.isAuthenticated && (
           <>
             <TopBar />
-            {sessionInfo && (
+            {/* {sessionInfo && (
               <div className="px-4 py-1 bg-muted/20">
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                   <span>Session</span>
@@ -248,13 +248,13 @@ const Layout: React.FC<LayoutProps> = ({
                   }
                 />
               </div>
-            )}
+            )} */}
           </>
         )}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           {children}
         </main>
-      </div> */}
+      </div>
     </div>
   );
 };
