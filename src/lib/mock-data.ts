@@ -12,7 +12,7 @@ export const generateMockFiles = (): File[] => {
       path: '/files/document1.pdf',
       uploadedBy: 'user-1',
       uploadedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 days ago
-      accessLevel: ['admin', 'user'],
+      accessLevel: ['admin', 'employee', 'department_head'],
       threatScore: 0.1,
       tags: ['document', 'report'],
       contentAnalysis: {
@@ -35,7 +35,7 @@ export const generateMockFiles = (): File[] => {
       path: '/files/sensitive_data.xlsx',
       uploadedBy: 'user-2',
       uploadedAt: new Date(Date.now() - 1000 * 60 * 60 * 48), // 2 days ago
-      accessLevel: ['admin'],
+      accessLevel: ['admin', 'employee', 'department_head'],
       threatScore: 0.6,
       tags: ['data', 'sensitive', 'confidential'],
       contentAnalysis: {
@@ -58,7 +58,7 @@ export const generateMockFiles = (): File[] => {
       path: '/files/suspicious_script.js',
       uploadedBy: 'user-3',
       uploadedAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-      accessLevel: ['admin'],
+      accessLevel: ['admin', 'employee', 'department_head'],
       threatScore: 0.85,
       tags: ['code', 'script', 'suspicious'],
       contentAnalysis: {
@@ -81,7 +81,7 @@ export const generateMockFiles = (): File[] => {
       path: '/files/project_plan.docx',
       uploadedBy: 'user-1',
       uploadedAt: new Date(Date.now() - 1000 * 60 * 60 * 72), // 3 days ago
-      accessLevel: ['admin', 'manager', 'user'],
+      accessLevel: ['admin', 'employee', 'department_head'],
       threatScore: 0.05,
       tags: ['document', 'plan', 'project'],
       contentAnalysis: {
