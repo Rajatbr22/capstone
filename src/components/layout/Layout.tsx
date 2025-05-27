@@ -222,7 +222,7 @@ const Layout: React.FC<LayoutProps> = ({
       {auth.isAuthenticated && (
         <Sidebar />
       )}
-      <div className="flex-1 flex flex-col">
+      {/* <div className="flex-1 flex flex-col">
         {auth.isAuthenticated && (
           <>
             <TopBar />
@@ -254,7 +254,7 @@ const Layout: React.FC<LayoutProps> = ({
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           {children}
         </main>
-      </div>
+      </div> */}
     </div>
   );
 };
